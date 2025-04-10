@@ -51,6 +51,7 @@ export class RendererWebview {
       '{elements}': toUri(webview, this.extensionPath, `webui`, `scripts`, `vscode-elements.js`),
       '{styles}': toUri(webview, this.extensionPath, `webui`, `styles.css`),
       '{codicon}': toUri(webview, this.extensionPath, `webui`, `scripts`, `codicon.css`),
+      '{konva}': toUri(webview, this.extensionPath, `webui`, `scripts`, `konva.min.js`),
     };
 
     // Replace all variables in the content

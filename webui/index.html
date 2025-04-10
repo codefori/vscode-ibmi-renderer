@@ -1,0 +1,35 @@
+<head>
+  <script src="{elements}" type="module"></script>
+  <script src="{showdown}"></script>
+  <link rel="stylesheet" href="{styles}">
+  <link rel="stylesheet" href="{codicon}" id="vscode-codicon-stylesheet">
+
+  <script>
+    // TODO: move to a separate file
+    const vscode = acquireVsCodeApi();
+   
+  </script>
+</head>
+
+<!-- https://vscode-elements.github.io/guides/getting-started/ -->
+
+<body>
+  <div id="chat-container">
+    <div id="chat-output">
+
+    </div>
+    <div id="chat-loading">
+      <div id="chat-loading-ring">
+        <vscode-progress-ring></vscode-progress-ring>
+      </div>
+    </div>
+    <div id="chat-bottom" style="padding-bottom: 6em"></div>
+  <div id="chat-input">
+    <vscode-textfield placeholder="What can we help you with?" id="query" name="query">
+      <vscode-badge id="chat-input-participant" slot="content-before"></vscode-badge>
+      <vscode-badge style="display: none;" id="chat-input-command" slot="content-before"></vscode-badge>
+    </vscode-textfield>
+    <vscode-textfield style="display: none;" readonly id="referencesList"></vscode-textfield>
+    </div>
+  </div>
+</body>

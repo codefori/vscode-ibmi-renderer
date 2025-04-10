@@ -1,0 +1,54 @@
+#chat-container {
+  margin-top: 2em;
+}
+
+#chat-sent {
+  text-align: left;
+  margin-bottom: 2em;
+}
+
+#chat-reply {
+  text-align: left;
+  margin-bottom: 2em;
+}
+
+#chat-input {
+  position: fixed;
+  padding-bottom: 1em;
+  bottom: 0;
+  width: 90%; /* Ensure it spans the full width */
+  z-index: 1000; /* Ensure it is always on top */
+}
+
+#chat-loading {
+  display: none;
+  margin-bottom: 2em;
+}
+
+#chat-loading-ring {
+  position: relative;
+  top: 50%;
+  left: 50%;
+}
+
+#query {
+  width: 100%;
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+}
+
+#referencesList {
+  padding: 0.5em;
+  width: 100%;
+}
+
+pre code {
+  background-color: unset;
+}
+
+pre {
+  background-color: var(--vscode-editor-background);
+  padding: 1em;
+  overflow: auto;
+  border-radius: 10px;
+}

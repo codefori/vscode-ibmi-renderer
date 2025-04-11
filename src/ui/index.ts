@@ -1,10 +1,12 @@
 import { readFile, readFileSync } from "fs";
-import { WebviewViewProvider, WebviewView, Uri, CancellationToken, WebviewViewResolveContext, Webview, DiagnosticSeverity, window, WebviewPanel, ViewColumn, ExtensionContext } from "vscode";
+import { WebviewViewProvider, WebviewView, Uri, CancellationToken, WebviewViewResolveContext, Webview, DiagnosticSeverity, window, WebviewPanel, ViewColumn, ExtensionContext, workspace, TextDocument } from "vscode";
 import { basename } from "path";
+import { DisplayFile } from "./dspf";
 
 
 export class RendererWebview {
   private view: WebviewPanel;
+  private document: TextDocument|undefined;
 
   private get extensionPath() {
     return this.context.extensionUri;
@@ -31,6 +33,19 @@ export class RendererWebview {
     panel.webview.html = this.getBaseHtml(panel.webview);
 
     this.view = panel;
+  }
+
+  async load() {
+    this.document = await workspace.openTextDocument(this.workingUri);
+    const content = this.document.getText();
+  
+    const dds = new DisplayFile();
+    dds.parse(content.split(/\r?\n/));
+
+    this.view.webview.postMessage({
+      command: "load",
+      dds: dds,
+    });
   }
 
   show() {

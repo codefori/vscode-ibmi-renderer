@@ -8,6 +8,15 @@
     // TODO: move to a separate file
     const vscode = acquireVsCodeApi();
 
+    window.addEventListener("message", (event) => {
+      const command = event.data.command;
+      switch (command) {
+        case `load`:
+          console.log(event.data);
+          break;
+      }
+    });
+
     window.onload = () => {
       let pxwPerChar = 8.45;
       let pxhPerChar = 11;
@@ -100,7 +109,7 @@
   <div id="chat-container">
     <!-- The reason the tabs are seperate is because -->
     <!-- we don't want multiple canvases -->
-    <vscode-tabs selected-index="0" fixed-pane="start">
+    <vscode-tabs id="" selected-index="0" fixed-pane="start">
       <vscode-tab-header slot="header">RCDFMT</vscode-tab-header>
       <vscode-tab-header slot="header">HEADER</vscode-tab-header>
       <vscode-tab-header slot="header">FOOTER</vscode-tab-header>

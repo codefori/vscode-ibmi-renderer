@@ -15,7 +15,9 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('vscode-ibmi-renderer.launchRenderer', (uri?: vscode.Uri) => {
 			if (uri) {
 				const panel = new RendererWebview(context, uri);
-				panel.show();
+				panel.load().then(() => {
+					panel.show();
+				});
 			}
 		})
 	);

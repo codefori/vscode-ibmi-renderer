@@ -64,7 +64,7 @@ export class DisplayFile {
               this.currentFields.push(this.currentField);
             }
 
-            this.currentField = new FieldInfo();
+            this.currentField = new FieldInfo(index);
             this.currentField.position = {
               x: Number(x),
               y: Number(y)
@@ -85,7 +85,7 @@ export class DisplayFile {
               }
             }
 
-            this.currentField = new FieldInfo();
+            this.currentField = new FieldInfo(index);
             this.currentField.position = {
               x: totalX,
               y: 0
@@ -341,6 +341,7 @@ class RecordInfo {
   public windowSize: { y: number, x: number, width: number, height: number } = { y: 0, x: 0, width: 80, height: 24 };
   public keywordStrings: string[] = [];
   public keywords: Keyword[] = [];
+
   constructor(public name: string) { }
 
   handleKeywords() {
@@ -414,8 +415,8 @@ class FieldInfo {
   public keywordStrings: { keywordLines: string[], conditionalLines: { [lineIndex: number]: string } } = { keywordLines: [], conditionalLines: {} };
   public conditions: Conditional[] = [];
   public keywords: Keyword[] = [];
-  constructor(public name?: string) {
-  }
+
+  constructor(public startRange: number, public name?: string) {}
 
   handleKeywords() {
     const data = DisplayFile.parseKeywords(this.keywordStrings.keywordLines, this.keywordStrings.conditionalLines);

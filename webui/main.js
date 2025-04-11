@@ -1,10 +1,17 @@
+/** 
+ * @typedef {import('./dspf.d.ts').DisplayFile} DisplayFile 
+ */
+
 const vscode = acquireVsCodeApi();
+
+/** @type {DisplayFile|undefined} */
+let activeDocument = undefined;
 
 window.addEventListener("message", (event) => {
   const command = event.data.command;
   switch (command) {
     case `load`:
-      console.log(event.data.dds);
+      activeDocument = event.data.dds;
       break;
   }
 });

@@ -23,7 +23,7 @@ export declare class DisplayFile {
         conditions: Conditional[];
     };
 }
-declare class RecordInfo {
+export declare class RecordInfo {
     name: string;
     fields: FieldInfo[];
     range: {
@@ -48,7 +48,7 @@ interface Keyword {
     value?: string;
     conditions: Conditional[];
 }
-declare class FieldInfo {
+export declare class FieldInfo {
     startRange: number;
     name?: string | undefined;
     value: string | undefined;
@@ -71,7 +71,7 @@ declare class FieldInfo {
     constructor(startRange: number, name?: string | undefined);
     handleKeywords(): void;
 }
-declare class Conditional {
+export declare class Conditional {
     indicator: number;
     negate: boolean;
     constructor(indicator: number, negate?: boolean);

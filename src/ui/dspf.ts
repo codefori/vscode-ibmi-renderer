@@ -333,7 +333,7 @@ export class DisplayFile {
   }
 }
 
-class RecordInfo {
+export class RecordInfo {
   public fields: FieldInfo[] = [];
   public range: { start: number, end: number } = { start: -1, end: -1 };
   public isWindow: boolean = false;
@@ -405,7 +405,7 @@ class RecordInfo {
 
 interface Keyword { name: string, value?: string, conditions: Conditional[] };
 
-class FieldInfo {
+export class FieldInfo {
   public value: string | undefined;
   public type: "char" | "decimal" | undefined;
   public displayType: "input" | "output" | "both" | "const" | "hidden" | undefined;
@@ -429,6 +429,6 @@ class FieldInfo {
   }
 }
 
-class Conditional {
+export class Conditional {
   constructor(public indicator: number, public negate = false) { }
 }

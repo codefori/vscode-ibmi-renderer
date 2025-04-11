@@ -7,7 +7,7 @@
   <script>
     // TODO: move to a separate file
     const vscode = acquireVsCodeApi();
-   
+
     window.onload = () => {
       let pxwPerChar = 8.45;
       let pxhPerChar = 11;
@@ -40,7 +40,7 @@
       function getNewSnapCords(x, y) {
         const newX = Math.round(x / pxwPerChar) * pxwPerChar;
         const newY = Math.round(y / pxhPerChar) * pxhPerChar;
-        return {x: newX, y: newY};
+        return { x: newX, y: newY };
       }
 
       function getLabelBox(row, col, text) {
@@ -48,15 +48,15 @@
         const height = 11;
 
         var rectangle = new Konva.Group({
-          x: (col-1) * pxwPerChar, 
-          y: (row-1) * pxhPerChar, 
+          x: (col - 1) * pxwPerChar,
+          y: (row - 1) * pxhPerChar,
           width: width,
           height: height,
           draggable: true,
         });
 
         rectangle.on(`dragend`, e => {
-          const {x, y} = e.target.attrs;
+          const { x, y } = e.target.attrs;
           console.log(x, y);
           const newCords = getNewSnapCords(x, y);
           e.target.to({
@@ -98,21 +98,26 @@
 
 <body>
   <div id="chat-container">
-    <div id="chat-output">
-      <div id="container"></div>
-    </div>
-    <div id="chat-loading">
-      <div id="chat-loading-ring">
-        <vscode-progress-ring></vscode-progress-ring>
+    <vscode-tabs panel selected-index="0" fixed-pane="start">
+      <vscode-tab-header slot="header">RCDFMT</vscode-tab-header>
+      <vscode-tab-header slot="header">HEADER</vscode-tab-header>
+      <vscode-tab-header slot="header">FOOTER</vscode-tab-header>
+    </vscode-tabs>
+
+    <vscode-split-layout>
+      <div slot="start">
+        <div id="container" style="margin: 2em"></div>
       </div>
-    </div>
-    <div id="chat-bottom" style="padding-bottom: 6em"></div>
-    <div id="chat-input">
-      <vscode-textfield placeholder="What can we help you with?" id="query" name="query">
-        <vscode-badge id="chat-input-participant" slot="content-before"></vscode-badge>
-        <vscode-badge style="display: none;" id="chat-input-command" slot="content-before"></vscode-badge>
-      </vscode-textfield>
-      <vscode-textfield style="display: none;" readonly id="referencesList"></vscode-textfield>
-    </div>
+
+      <div slot="end">
+        <vscode-form-group variant="settings-group">
+          <vscode-label for="settings-textfield-01">
+            Field name
+          </vscode-label>
+          <vscode-textfield id="settings-textfield-01" placeholder="TEXT01"></vscode-textfield>
+        </vscode-form-group>
+      </div>
+    </vscode-split-layout>
+
   </div>
 </body>

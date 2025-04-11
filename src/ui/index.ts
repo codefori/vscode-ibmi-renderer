@@ -63,6 +63,7 @@ export class RendererWebview {
     let content = readFileSync(basePath.fsPath, "utf-8");
 
     const fileVariables = {
+      '{main}': toUri(webview, this.extensionPath, `webui`, `main.js`),
       '{elements}': toUri(webview, this.extensionPath, `webui`, `scripts`, `vscode-elements.js`),
       '{styles}': toUri(webview, this.extensionPath, `webui`, `styles.css`),
       '{codicon}': toUri(webview, this.extensionPath, `webui`, `scripts`, `codicon.css`),

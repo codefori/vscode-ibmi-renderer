@@ -98,26 +98,61 @@
 
 <body>
   <div id="chat-container">
-    <vscode-tabs panel selected-index="0" fixed-pane="start">
+    <!-- The reason the tabs are seperate is because -->
+    <!-- we don't want multiple canvases -->
+    <vscode-tabs selected-index="0" fixed-pane="start">
       <vscode-tab-header slot="header">RCDFMT</vscode-tab-header>
       <vscode-tab-header slot="header">HEADER</vscode-tab-header>
       <vscode-tab-header slot="header">FOOTER</vscode-tab-header>
     </vscode-tabs>
 
-    <vscode-split-layout>
-      <div slot="start">
-        <div id="container" style="margin: 2em"></div>
-      </div>
 
-      <div slot="end">
+    <div style="display: flex; height: 100vh;">
+      <!-- Left Sidebar -->
+      <div style="width: 15%; padding: 1em; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">
         <vscode-form-group variant="settings-group">
           <vscode-label for="settings-textfield-01">
-            Field name
+            Lorem <span class="normal">ipsum</span>:
           </vscode-label>
-          <vscode-textfield id="settings-textfield-01" placeholder="TEXT01"></vscode-textfield>
+          <vscode-form-helper>
+            <p>
+              Lorem ipsum <code>let dolor = sit amet</code>, consectetur adipiscing
+              elit. <span class="error">Suspendisse</span> faucibus imperdiet
+              sapien, a gravida <a href="#">dolor</a>.
+            </p>
+          </vscode-form-helper>
+          <vscode-textfield
+            id="settings-textfield-01"
+            placeholder="Placeholder example"
+          ></vscode-textfield>
         </vscode-form-group>
       </div>
-    </vscode-split-layout>
+
+      <!-- Main Content -->
+      <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
+        <div id="container" style="margin: 2em;"></div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div style="width: 15%; padding: 1em; box-shadow: -2px 0 5px rgba(0,0,0,0.1);">
+        <vscode-form-group variant="settings-group">
+          <vscode-label for="settings-textfield-01">
+            Lorem <span class="normal">ipsum</span>:
+          </vscode-label>
+          <vscode-form-helper>
+            <p>
+              Lorem ipsum <code>let dolor = sit amet</code>, consectetur adipiscing
+              elit. <span class="error">Suspendisse</span> faucibus imperdiet
+              sapien, a gravida <a href="#">dolor</a>.
+            </p>
+          </vscode-form-helper>
+          <vscode-textfield
+            id="settings-textfield-01"
+            placeholder="Placeholder example"
+          ></vscode-textfield>
+        </vscode-form-group>
+      </div>
+    </div></div>
 
   </div>
 </body>

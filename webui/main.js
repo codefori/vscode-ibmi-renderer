@@ -4,7 +4,7 @@
  * @typedef {import('./dspf.d.ts').FieldInfo} FieldInfo
  */
 
-const colors = {
+const colours = {
   RED: `red`,
   BLU: `#4287f5`,
   WHT: `#FFFFFF`,
@@ -124,7 +124,7 @@ function renderWindow(chosenFormat) {
     y: 0,
     width: width,
     height: height,
-    fill: colors.BLK
+    fill: colours.BLK
   });
 
   var layer = new Konva.Layer();
@@ -185,7 +185,7 @@ function addFieldsToLayer(layer, format) {
           
           if (canDisplay) {
             subField.name = `${field.name}_${row}`;
-            const content = getElement(subField);
+            const content = getElement(subField, true);
             layer.add(content);
           }
         });
@@ -218,7 +218,7 @@ function addFieldsToLayer(layer, format) {
 /**
  * @param {FieldInfo} fieldInfo 
  */
-function getElement(fieldInfo) {
+function getElement(fieldInfo, displayOnly = false) {
   const boxInfo = {
     x: widthInP(fieldInfo.position.x - 1),
     y: heightInP(fieldInfo.position.y - 1),
@@ -227,7 +227,9 @@ function getElement(fieldInfo) {
   };
   const labelInfo = {
     value: fieldInfo.value || ``,
-    colour: colors.GRN
+    colour: colours.GRN,
+    fontStyle: `normal`,
+    textDecoration: ``
   };
 
   const keywords = fieldInfo.keywords;
@@ -239,7 +241,7 @@ function getElement(fieldInfo) {
         labelInfo.value = `####`;
         break;
       case `COLOR`:
-        labelInfo.color = colors[keyword.value] || colors.GRN;
+        labelInfo.colour = colours[keyword.value] || colours.GRN;
         break;
       case `SYSNAME`:
         labelInfo.value = `SYSNAME_`;
@@ -272,24 +274,29 @@ function getElement(fieldInfo) {
         }
         break;
       case `UNDERLINE`:
-        // css += `text-decoration: underline;`;
+        labelInfo.textDecoration = `underline`;
         break;
       case `HIGHLIGHT`:
         // css += `font-weight: 900;`;
+        labelInfo.fontStyle = `900`;
         break;
       case `DSPATR`:
         keyword.value.split(` `).forEach(value => {
           switch (value) {
             case `UL`:
               // css += `text-decoration: underline;`;
+              labelInfo.textDecoration = `underline`;
               break;
             case `HI`:
               // css += `font-weight: 900;`;
               // if (!keywords.find(keyword => keyword.name === `COLOR`)) {
               //   css += `color: ${colors.WHT};`;
               // }
+              labelInfo.fontStyle = `900`;
+              labelInfo.colour = colours.WHT;
               break;
             case `BL`:
+              // Can Konva do a blinking effect?
               // css += `animation: blinker 1s step-start infinite;`;
               break;
           }
@@ -329,7 +336,7 @@ function getElement(fieldInfo) {
 
   group.add(new Konva.Rect({
     id: `bg`,
-    fill: colors.BLK,
+    fill: colours.BLK,
     x: 0,
     y: 0,
     width: boxInfo.width,
@@ -344,9 +351,11 @@ function getElement(fieldInfo) {
     fill: labelInfo.colour
   }));
 
-  group.on('pointerclick', () => {
-    setActiveField(group, fieldInfo);
-  });
+  if (!displayOnly) {
+    group.on('pointerclick', () => {
+      setActiveField(group, fieldInfo);
+    });
+  }
 
   return group;
 }
@@ -432,13 +441,13 @@ function setActiveField(konvaElement, fieldInfo) {
   if (lastActiveKonvaElement) {
     const bg = lastActiveKonvaElement.findOne(`#bg`);
     // Remove background from last active element
-    bg.fill(colors.BLK);
+    bg.fill(colours.BLK);
   }
 
   if (konvaElement) {
     lastActiveKonvaElement = konvaElement;
 
     const bg = lastActiveKonvaElement.findOne(`#bg`);
-    bg.fill(colors.BLU);
+    bg.fill(colours.BLU);
   }
 }

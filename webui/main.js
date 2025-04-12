@@ -67,21 +67,21 @@ function loadDDS(newDoc, type) {
 
   const firstFormat = validFormats[0];
   if (firstFormat) {
-    renderFormatByName(firstFormat.name);
+    prepareViewForFormat(firstFormat.name);
   }
 }
 
 /**
- * @param {string} name 
+ * @param {string} chosenFormat 
  */
-function renderFormatByName(name) {
+function prepareViewForFormat(chosenFormat) {
   let renderWidth = 80;
   let renderHeight = 24;
 
-  const selectedFormat = activeDocument.formats.find(currentFormat => currentFormat.name === name);
+  const selectedFormat = activeDocument.formats.find(currentFormat => currentFormat.name === chosenFormat);
 
   if (!selectedFormat) {
-    console.error(`Format ${name} not found`);
+    console.error(`Format ${chosenFormat} not found`);
     return;
   }
 
@@ -139,7 +139,7 @@ function renderSelectedFormat(layer, format) {
   // TODO: handle window
   // TODO: make format optional
   if (format) {
-    addElementsToLayer(layer, format);
+    addFieldsToLayer(layer, format);
   }
 }
 
@@ -148,12 +148,48 @@ function renderSelectedFormat(layer, format) {
  * @param {*} layer 
  * @param {RecordInfo} format 
  */
-function addElementsToLayer(layer, format) {
+function addFieldsToLayer(layer, format) {
   const subfileFormat = format.keywords.find(keyword => keyword.name === `SFLCTL`);
   // TODO: handle when subFileFormat is found
 
   if (subfileFormat) {
+    const subfilePage = format.keywords.find(keyword => keyword.name === `SFLPAG`)
+    const rows = Number(subfilePage ? subfilePage.value : 1);
 
+    const subfileRecord = activeDocument.formats.find(format => format.name === subfileFormat.value);
+
+    if (subfileRecord) {
+      const subfileFields = subfileRecord.fields.filter(field => field.displayType !== `hidden`);
+      
+      const low = Math.min(...subfileFields.map(field => field.position.y));
+      const high = Math.max(...subfileFields.map(field => field.position.y));
+      const linesPerItem = (high - low) + 1;
+      
+      for (let row = 0; row < rows; row++) {
+        subfileFields.forEach(field => {
+          // TODO: these fields cant be edited in this format
+          let subField = JSON.parse(JSON.stringify(field));
+          subField.position.y += (row * linesPerItem);
+          let canDisplay = true;
+
+          // field.conditions.forEach(cond => {
+          //   if (this.indicators[cond.indicator] !== (cond.negate ? false : true)) {
+          //     canDisplay = false;
+          //   }
+          // });
+          
+          if (canDisplay) {
+            subField.name = `${field.name}_${row}`;
+            const content = getElement(subField);
+            layer.add(content);
+          }
+        });
+      }
+
+
+    } else {
+      throw new Error(`Unable to find SFLCTL format ${subfileFormat} from ${recordFormat}`);
+    }
   }
 
   const fields = format.fields.filter(field => field.displayType !== `hidden`);
@@ -354,7 +390,7 @@ window.onload = () => {
     const selectedFormat = activeDocument && activeDocument.formats[event.detail.selectedIndex+1];
 
     if (selectedFormat) {
-      renderFormatByName(selectedFormat.name);
+      prepareViewForFormat(selectedFormat.name);
     }
   });
 };

@@ -28,6 +28,11 @@ export class RendererWebview {
       ],
     };
 
+    panel.onDidChangeViewState((e) => {
+      if (e.webviewPanel.visible) {
+        this.load();
+      }
+    });
     panel.webview.onDidReceiveMessage(this.onDidGetMessage.bind(this));
 
     panel.webview.html = this.getBaseHtml(panel.webview);

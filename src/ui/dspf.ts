@@ -1,9 +1,9 @@
 
 export class DisplayFile {
   public formats: RecordInfo[] = [];
-  private currentField: FieldInfo | undefined;
-  private currentFields: FieldInfo[] = [];
-  private currentRecord: RecordInfo|undefined = new RecordInfo(`GLOBAL`);
+  public currentField: FieldInfo | undefined;
+  public currentFields: FieldInfo[] = [];
+  public currentRecord: RecordInfo|undefined = new RecordInfo(`GLOBAL`);
 
   constructor() { }
 

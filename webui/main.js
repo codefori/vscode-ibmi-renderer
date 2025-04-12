@@ -183,7 +183,7 @@ function getElement(fieldInfo) {
     y: heightInP((fieldInfo.position.y - 1)),
     width: -1,
     height: heightInP(1),
-    value: ``,
+    value: fieldInfo.value || ``,
     colour: colors.GRN,
   };
 
@@ -341,7 +341,7 @@ function setTabs(recordFormats) {
   const tabs = document.getElementById(`recordFormatTabs`);
   tabs.innerHTML = recordFormats.map(f => 
     `<vscode-tab-header name="${f}" slot="header">${f}</vscode-tab-header>`
-  );
+  ).join(``);
 }
 
 

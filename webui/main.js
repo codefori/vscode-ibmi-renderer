@@ -500,6 +500,7 @@ function updateSelectedFieldSidebar(fieldInfo) {
   /** @type {{title: string, html: string, open?: boolean}[]} */
   let sections = [];
 
+  /** @type {{name: string, value: string, editableId?: string}[]} */
   const properties = [];
 
   if (fieldInfo.name) {
@@ -512,22 +513,22 @@ function updateSelectedFieldSidebar(fieldInfo) {
   );
 
   if (fieldInfo.value !== undefined) {
-    properties.push({ name: `Value`, value: fieldInfo.value });
+    properties.push({ name: `Value`, value: fieldInfo.value, editableId: `value` });
   }
 
   if (fieldInfo.type) {
     properties.push(
       { name: `Type`, value: fieldInfo.type },
-      { name: `Length`, value: fieldInfo.length },
+      { name: `Length`, value: fieldInfo.length, editableId: `length` },
     );
   }
 
   const propertyRows = properties.map(property => {
-    return `<vscode-table-row><vscode-table-cell>${property.name}</vscode-table-cell><vscode-table-cell>${property.value}</vscode-table-cell></vscode-table-row>`;
+    return `<vscode-table-row><vscode-table-cell>${property.name}</vscode-table-cell><vscode-table-cell ${property.editableId ? `id="field-${property.editableId}" contenteditable="true"` : ``}>${property.value}</vscode-table-cell></vscode-table-row>`;
   }).join(``);
 
   const keywordRows = fieldInfo.keywords.map(keyword => {
-    return `<vscode-table-row><vscode-table-cell>${keyword.name}</vscode-table-cell><vscode-table-cell>${keyword.value ? `<code>${keyword.value}</code>` : ``}</vscode-table-cell></vscode-table-row>`;
+    return `<vscode-table-row><vscode-table-cell>${keyword.name}</vscode-table-cell><vscode-table-cell>${keyword.value ? `<code id="field-keyword-${keyword.name}" contenteditable="true">${keyword.value}</code>` : ``}</vscode-table-cell></vscode-table-row>`;
   }).join(``);
 
   sections.push(
@@ -547,5 +548,43 @@ function updateSelectedFieldSidebar(fieldInfo) {
     return `<vscode-collapsible title="${section.title}" ${section.open ? `open` : ``}>${section.html}</vscode-collapsible>`;
   }).join(``);
 
+  // create button
+  const button = document.createElement(`vscode-button`);
+  button.innerText = `Update`;
+  
+  // Center the button
+  button.style.margin = `1em`;
+  button.style.display = `block`;
+
+  button.addEventListener(`click`, () => {
+    const fields = sidebar.querySelectorAll(`[contenteditable]`);
+    const newDetail = {mainProps: {}, keywords: {}};
+
+    fields.forEach(field => {
+      const id = field.id;
+      const value = field.innerText;
+
+      if (id.startsWith(`field-keyword-`)) {
+        const prop = id.substring(`field-keyword-`.length);
+        newDetail.keywords[prop] = value;
+      } else if (id.startsWith(`field-`)) {
+        const keyword = id.substring(`field-`.length);
+        newDetail.mainProps[keyword] = value;
+      }
+    });
+
+    console.log(newDetail);
+  });
+  
+  sidebar.appendChild(button);
+
   sidebar.style.display = `block`;
+}
+
+function sendFieldUpdate(recordFormat, fieldInfo) {
+  vscode.postMessage({
+    command: `updateField`,
+    recordFormat,
+    fieldInfo
+  });
 }

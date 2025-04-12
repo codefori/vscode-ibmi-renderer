@@ -37,14 +37,15 @@ const timeFormats = {
 const vscode = acquireVsCodeApi();
 
 const pxwPerChar = 8.45;
-const pxhPerChar = 20;
+const pxhPerLine = 20;
+const pxhPerChar = 12.5;
 
 function widthInP(x) {
   return x * pxwPerChar;
 }
 
 function heightInP(x) {
-  return x * pxhPerChar;
+  return x * pxhPerLine;
 }
 
 /** @type {DisplayFile|undefined} */
@@ -107,7 +108,7 @@ function prepareViewForFormat(chosenFormat) {
   }
 
   var width = renderWidth * pxwPerChar;
-  var height = renderHeight * pxhPerChar;
+  var height = renderHeight * pxhPerLine;
 
   var stage = new Konva.Stage({
     container: 'container',
@@ -214,13 +215,15 @@ function addFieldsToLayer(layer, format) {
  * @param {FieldInfo} fieldInfo 
  */
 function getElement(fieldInfo) {
-  const field = {
-    x: widthInP((fieldInfo.position.x - 1)),
-    y: heightInP((fieldInfo.position.y - 1)),
-    width: -1,
+  const boxInfo = {
+    x: widthInP(fieldInfo.position.x - 1),
+    y: heightInP(fieldInfo.position.y - 1),
+    width: 0,
     height: heightInP(1),
+  };
+  const labelInfo = {
     value: fieldInfo.value || ``,
-    colour: colors.GRN,
+    colour: colors.GRN
   };
 
   const keywords = fieldInfo.keywords;
@@ -229,26 +232,26 @@ function getElement(fieldInfo) {
     const key = keyword.name;
     switch (key) {
       case `PAGNBR`:
-        field.value = `####`;
+        labelInfo.value = `####`;
         break;
       case `COLOR`:
-        field.color = colors[keyword.value] || colors.GRN;
+        labelInfo.color = colors[keyword.value] || colors.GRN;
         break;
       case `SYSNAME`:
-        field.value = `SYSNAME_`;
+        labelInfo.value = `SYSNAME_`;
         break;
       case `USER`:
-        field.value = `USERNAME__`;
+        labelInfo.value = `USERNAME__`;
         break;
       case `DATE`:
         const dateSep = keywords.find(keyword => keyword.name === `DATSEP`);
 
         const dateFormat = keywords.find(keyword => keyword.name === `DATFMT`);
         if (dateFormat) {
-          field.value = dateFormats[dateFormat.value] || `?FORMAT?`;
+          labelInfo.value = dateFormats[dateFormat.value] || `?FORMAT?`;
 
           if (dateSep && dateSep.value.toUpperCase() !== `*JOB`) {
-            field.value = field.value.replace(new RegExp(`[./-:]`, `g`), dateSep.value);
+            labelInfo.value = labelInfo.value.replace(new RegExp(`[./-:]`, `g`), dateSep.value);
           }
         }
         break;
@@ -257,10 +260,10 @@ function getElement(fieldInfo) {
 
         const format = keywords.find(keyword => keyword.name === `TIMFMT`);
         if (format) {
-          field.value = timeFormats[format.value] || `?FORMAT?`;
+          labelInfo.value = timeFormats[format.value] || `?FORMAT?`;
 
           if (sep && sep.value.toUpperCase() !== `*JOB`) {
-            field.value = field.value.replace(new RegExp(`[./-:]`, `g`), sep.value);
+            labelInfo.value = labelInfo.value.replace(new RegExp(`[./-:]`, `g`), sep.value);
           }
         }
         break;
@@ -293,16 +296,16 @@ function getElement(fieldInfo) {
 
   let padString = `-`;
 
-  switch (field.type) {
+  switch (fieldInfo.type) {
     case `char`:
-      switch (field.displayType) {
+      switch (fieldInfo.displayType) {
         case `input`: padString = `I`; break;
         case `output`: padString = `O`; break;
         case `both`: padString = `B`; break;
       }
       break;
     case `decimal`:
-      switch (field.displayType) {
+      switch (fieldInfo.displayType) {
         case `input`: padString = `3`; break;
         case `output`: padString = `6`; break;
         case `both`: padString = `9`; break;
@@ -310,24 +313,38 @@ function getElement(fieldInfo) {
       break;
   }
 
-  const displayLength = fieldInfo.length > 0 && field.value.length < fieldInfo.length ? fieldInfo.length : field.value.length;
-  const displayValue = field.value
+  const displayLength = fieldInfo.length > 0 && labelInfo.value.length < fieldInfo.length ? fieldInfo.length : labelInfo.value.length;
+  const displayValue = labelInfo.value
     .replace(new RegExp(`''`, `g`), `'`)
     .padEnd(displayLength, padString);
 
-  field.width = widthInP(displayLength);
+  boxInfo.width = widthInP(displayLength);
+  labelInfo.width = widthInP(displayLength);
 
-  var rectangle = new Konva.Group(field);
+  var group = new Konva.Group(boxInfo);
+
+  group.add(new Konva.Rect({
+    id: `bg`,
+    fill: colors.BLK,
+    x: 0,
+    y: 0,
+    width: boxInfo.width,
+    height: pxhPerChar,
+  }));
 
   // add text to the label
-  rectangle.add(new Konva.Text({
+  group.add(new Konva.Text({
     text: displayValue,
     fontSize: 14,
     fontFamily: `Consolas, "Liberation Mono", Menlo, Courier, monospace`,
-    fill: field.colour
+    fill: labelInfo.colour
   }));
 
-  return rectangle;
+  group.on('pointerclick', () => {
+    setActiveField(group, fieldInfo);
+  });
+
+  return group;
 }
 
 function parseParms(string) {
@@ -394,3 +411,25 @@ window.onload = () => {
     }
   });
 };
+
+let lastActiveKonvaElement;
+
+/**
+ * 
+ * @param {*} [konvaElement] 
+ * @param {FieldInfo} [fieldInfo] 
+ */
+function setActiveField(konvaElement, fieldInfo) {
+  if (lastActiveKonvaElement) {
+    const bg = lastActiveKonvaElement.findOne(`#bg`);
+    // Remove background from last active element
+    bg.fill(colors.BLK);
+  }
+
+  if (konvaElement) {
+    lastActiveKonvaElement = konvaElement;
+
+    const bg = lastActiveKonvaElement.findOne(`#bg`);
+    bg.fill(colors.BLU);
+  }
+}

@@ -54,6 +54,9 @@ let activeDocument = undefined;
 /** @type {"dds.dspf"|undefined} */
 let activeDocumentType = undefined;
 
+/** @type {string|undefined} */
+let lastSelectedFormat = undefined;
+
 /**
  * @param {DisplayFile} newDoc 
  * @param {"dds.dspf"} type //TODO: support dds.prtf
@@ -64,18 +67,18 @@ function loadDDS(newDoc, type) {
 
   const validFormats = activeDocument.formats.filter(format => format.name !== `GLOBAL`);
 
-  setTabs(validFormats.map(format => format.name));
+  setTabs(validFormats.map(format => format.name), lastSelectedFormat);
 
-  const firstFormat = validFormats[0];
-  if (firstFormat) {
-    prepareViewForFormat(firstFormat.name);
+  const chosenFormat = lastSelectedFormat || (validFormats[0] ? validFormats[0].name : undefined);
+  if (chosenFormat) {
+    renderWindow(chosenFormat);
   }
 }
 
 /**
  * @param {string} chosenFormat 
  */
-function prepareViewForFormat(chosenFormat) {
+function renderWindow(chosenFormat) {
   let renderWidth = 80;
   let renderHeight = 24;
 
@@ -137,6 +140,7 @@ function prepareViewForFormat(chosenFormat) {
  * @param {RecordInfo} [format] 
  */
 function renderSelectedFormat(layer, format) {
+  lastSelectedFormat = format.name;
   // TODO: handle window
   // TODO: make format optional
   if (format) {
@@ -380,11 +384,16 @@ function parseParms(string) {
 /**
  * @param {string[]} recordFormats 
  */
-function setTabs(recordFormats) {
+function setTabs(recordFormats, setActiveTab) {
+  // Defined like: <vscode-tabs id="recordFormatTabs" selected-index="0" fixed-pane="start">
   const tabs = document.getElementById(`recordFormatTabs`);
   tabs.innerHTML = recordFormats.map(f => 
     `<vscode-tab-header name="${f}" slot="header">${f}</vscode-tab-header>`
   ).join(``);
+
+  if (setActiveTab) {
+    tabs.setAttribute(`selected-index`, recordFormats.indexOf(setActiveTab));
+  }
 }
 
 
@@ -407,7 +416,7 @@ window.onload = () => {
     const selectedFormat = activeDocument && activeDocument.formats[event.detail.selectedIndex+1];
 
     if (selectedFormat) {
-      prepareViewForFormat(selectedFormat.name);
+      renderWindow(selectedFormat.name);
     }
   });
 };

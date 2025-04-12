@@ -71,14 +71,14 @@ function loadDDS(newDoc, type) {
 
   const chosenFormat = lastSelectedFormat || (validFormats[0] ? validFormats[0].name : undefined);
   if (chosenFormat) {
-    renderWindow(chosenFormat);
+    setWindowForFormat(chosenFormat);
   }
 }
 
 /**
  * @param {string} chosenFormat 
  */
-function renderWindow(chosenFormat) {
+function setWindowForFormat(chosenFormat) {
   let renderWidth = 80;
   let renderHeight = 24;
 
@@ -132,6 +132,9 @@ function renderWindow(chosenFormat) {
 
   renderSelectedFormat(layer, selectedFormat);
   stage.add(layer);
+
+  updateRecordFormatSidebar(selectedFormat);
+  setActiveField();
 }
 
 /**
@@ -425,7 +428,7 @@ window.onload = () => {
     const selectedFormat = activeDocument && activeDocument.formats[event.detail.selectedIndex+1];
 
     if (selectedFormat) {
-      renderWindow(selectedFormat.name);
+      setWindowForFormat(selectedFormat.name);
     }
   });
 };
@@ -442,12 +445,107 @@ function setActiveField(konvaElement, fieldInfo) {
     const bg = lastActiveKonvaElement.findOne(`#bg`);
     // Remove background from last active element
     bg.fill(colours.BLK);
+    lastActiveKonvaElement = undefined;
   }
 
-  if (konvaElement) {
+  if (konvaElement && fieldInfo) {
     lastActiveKonvaElement = konvaElement;
 
     const bg = lastActiveKonvaElement.findOne(`#bg`);
     bg.fill(colours.BLU);
+
+    updateSelectedFieldSidebar(fieldInfo);
+  } else {
+    clearFieldInfo();
   }
+}
+
+/**
+ * 
+ * @param {RecordInfo} recordInfo
+ */
+function updateRecordFormatSidebar(recordInfo) {
+  const sidebar = document.getElementById(`recordFormatSidebar`);
+
+  /** @type {{title: string, html: string, open?: boolean}[]} */
+  let sections = [];
+
+  const keywordRows = recordInfo.keywords.map(keyword => {
+    return `<vscode-table-row><vscode-table-cell>${keyword.name}</vscode-table-cell><vscode-table-cell>${keyword.value ? `<code>${keyword.value}</code>` : ``}</vscode-table-cell></vscode-table-row>`;
+  }).join(``);
+
+  sections.push({
+    title: `Keywords`,
+    html: `<vscode-table><vscode-table-body slot="body">${keywordRows}</vscode-table-body></vscode-table>`,
+    open: true
+  });
+
+  sidebar.innerHTML = sections.map(section => {
+    return `<vscode-collapsible title="${section.title}" ${section.open ? `open` : ``}>${section.html}</vscode-collapsible>`;
+  }).join(``);
+}
+
+function clearFieldInfo() {
+  const sidebar = document.getElementById(`fieldInfoSidebar`);
+  sidebar.style.display = `none`;
+}
+
+/**
+ * 
+ * @param {FieldInfo} fieldInfo 
+ */
+function updateSelectedFieldSidebar(fieldInfo) {
+  const sidebar = document.getElementById(`fieldInfoSidebar`);
+
+  /** @type {{title: string, html: string, open?: boolean}[]} */
+  let sections = [];
+
+  const properties = [];
+
+  if (fieldInfo.name) {
+    properties.push({ name: `Name`, value: fieldInfo.name });
+  }
+
+  properties.push(
+    { name: `Display Type`, value: fieldInfo.displayType },
+    { name: `Position`, value: `${fieldInfo.position.x}, ${fieldInfo.position.y}` },
+  );
+
+  if (fieldInfo.value !== undefined) {
+    properties.push({ name: `Value`, value: fieldInfo.value });
+  }
+
+  if (fieldInfo.type) {
+    properties.push(
+      { name: `Type`, value: fieldInfo.type },
+      { name: `Length`, value: fieldInfo.length },
+    );
+  }
+
+  const propertyRows = properties.map(property => {
+    return `<vscode-table-row><vscode-table-cell>${property.name}</vscode-table-cell><vscode-table-cell>${property.value}</vscode-table-cell></vscode-table-row>`;
+  }).join(``);
+
+  const keywordRows = fieldInfo.keywords.map(keyword => {
+    return `<vscode-table-row><vscode-table-cell>${keyword.name}</vscode-table-cell><vscode-table-cell>${keyword.value ? `<code>${keyword.value}</code>` : ``}</vscode-table-cell></vscode-table-row>`;
+  }).join(``);
+
+  sections.push(
+    {
+      title: `Properties`,
+      html: `<vscode-table><vscode-table-body slot="body">${propertyRows}</vscode-table-body></vscode-table>`,
+      open: true
+    },
+    {
+      title: `Keywords`,
+      html: `<vscode-table><vscode-table-body slot="body">${keywordRows}</vscode-table-body></vscode-table>`,
+      open: true
+    }
+  );
+
+  sidebar.innerHTML = sections.map(section => {
+    return `<vscode-collapsible title="${section.title}" ${section.open ? `open` : ``}>${section.html}</vscode-collapsible>`;
+  }).join(``);
+
+  sidebar.style.display = `block`;
 }

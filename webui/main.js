@@ -190,16 +190,6 @@ function getElement(fieldInfo) {
   const keywords = fieldInfo.keywords;
 
   keywords.forEach(keyword => {
-    let canDisplay = true;
-
-    // keyword.conditions.forEach(cond => {
-    //   if (this.indicators[cond.indicator] !== (cond.negate ? false : true)) {
-    //     canDisplay = false;
-    //   }
-    // })
-
-    if (!canDisplay) { return; }
-
     const key = keyword.name;
     switch (key) {
       case `PAGNBR`:

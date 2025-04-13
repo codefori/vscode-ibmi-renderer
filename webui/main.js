@@ -2,6 +2,7 @@
  * @typedef {import('./dspf.d.ts').DisplayFile} DisplayFile
  * @typedef {import('./dspf.d.ts').RecordInfo} RecordInfo
  * @typedef {import('./dspf.d.ts').FieldInfo} FieldInfo
+ * @typedef {import('./dspf.d.ts').Keyword} Keyword
  */
 
 const colours = {
@@ -56,6 +57,8 @@ let activeDocumentType = undefined;
 
 /** @type {string|undefined} */
 let lastSelectedFormat = undefined;
+
+let existingStage = undefined;
 
 /**
  * @param {DisplayFile} newDoc 
@@ -113,7 +116,11 @@ function setWindowForFormat(chosenFormat) {
   var width = renderWidth * pxwPerChar;
   var height = renderHeight * pxhPerLine;
 
-  var stage = new Konva.Stage({
+  if (existingStage) {
+    existingStage.destroy();
+  }
+
+  existingStage = new Konva.Stage({
     container: 'container',
     width: width,
     height: height
@@ -127,11 +134,13 @@ function setWindowForFormat(chosenFormat) {
     fill: colours.BLK
   });
 
-  var layer = new Konva.Layer();
+  var layer = new Konva.Layer({
+    id: selectedFormat.name
+  });
   layer.add(bg);
 
   renderSelectedFormat(layer, selectedFormat);
-  stage.add(layer);
+  existingStage.add(layer);
 
   updateRecordFormatSidebar(selectedFormat);
   setActiveField();
@@ -218,16 +227,33 @@ function addFieldsToLayer(layer, format) {
   });
 }
 
+function renderSpecificField(fieldInfo) {
+  const existingField = existingStage.findOne(`#${fieldInfo.name}`);
+
+  if (existingField) {
+    existingField.destroy();
+  }
+
+  const formatLayer = existingStage.findOne(`#${lastSelectedFormat}`);
+
+  if (formatLayer) {
+    const content = getElement(fieldInfo);
+    formatLayer.add(content);
+  }
+}
+
 /**
  * @param {FieldInfo} fieldInfo 
  */
 function getElement(fieldInfo, displayOnly = false) {
   const boxInfo = {
+    id: fieldInfo.name,
     x: widthInP(fieldInfo.position.x - 1),
     y: heightInP(fieldInfo.position.y - 1),
     width: 0,
     height: heightInP(1),
   };
+
   const labelInfo = {
     value: fieldInfo.value || ``,
     colour: colours.GRN,
@@ -444,7 +470,11 @@ function setActiveField(konvaElement, fieldInfo) {
   if (lastActiveKonvaElement) {
     const bg = lastActiveKonvaElement.findOne(`#bg`);
     // Remove background from last active element
-    bg.fill(colours.BLK);
+
+    if (bg) {
+      bg.fill(colours.BLK);
+    }
+
     lastActiveKonvaElement = undefined;
   }
 
@@ -550,15 +580,23 @@ function updateSelectedFieldSidebar(fieldInfo) {
 
   // create button
   const button = document.createElement(`vscode-button`);
+  button.fieldInfo = JSON.parse(JSON.stringify(fieldInfo));
   button.innerText = `Update`;
   
   // Center the button
   button.style.margin = `1em`;
   button.style.display = `block`;
 
-  button.addEventListener(`click`, () => {
+  button.addEventListener(`click`, (e) => {
+    /** @type {FieldInfo} */
+    const previousField = e.target.fieldInfo;
+
     const fields = sidebar.querySelectorAll(`[contenteditable]`);
-    const newDetail = {mainProps: {}, keywords: {}};
+
+    /** @type {{[key: string]: string, keywords: Keyword[]}}} */
+    const newDetail = {mainProps: {}, keywords: []};
+
+    // First let's grab all the fields from the UI
 
     fields.forEach(field => {
       const id = field.id;
@@ -566,14 +604,39 @@ function updateSelectedFieldSidebar(fieldInfo) {
 
       if (id.startsWith(`field-keyword-`)) {
         const prop = id.substring(`field-keyword-`.length);
-        newDetail.keywords[prop] = value;
+        
+        newDetail.keywords.push({
+          name: prop,
+          value: value,
+          conditions: [] // TODO, pick up old conditions
+        });
+
       } else if (id.startsWith(`field-`)) {
         const keyword = id.substring(`field-`.length);
         newDetail.mainProps[keyword] = value;
       }
     });
 
-    console.log(newDetail);
+    // Then update and send the changes to the backend
+
+    const originalName = previousField.name;
+
+    for (const valueKey in newDetail.mainProps) {
+      const value = newDetail.mainProps[valueKey];
+
+      previousField[valueKey] = value;
+    }
+
+    for (const propKey in newDetail.keywords) {
+      const propValue = newDetail.keywords[propKey];
+
+      const keyword = previousField.keywords.find(keyword => keyword.name === propKey);
+      if (keyword) {
+        keyword.value = propValue;
+      }
+    }
+
+    sendFieldUpdate(lastSelectedFormat, originalName, previousField);
   });
   
   sidebar.appendChild(button);
@@ -581,10 +644,28 @@ function updateSelectedFieldSidebar(fieldInfo) {
   sidebar.style.display = `block`;
 }
 
-function sendFieldUpdate(recordFormat, fieldInfo) {
+/**
+ * @param {string} recordFormat 
+ * @param {string} originalFieldName 
+ * @param {FieldInfo} finewFieldldInfo 
+ */
+function sendFieldUpdate(recordFormat, originalFieldName, finewFieldldInfo) {
   vscode.postMessage({
     command: `updateField`,
     recordFormat,
-    fieldInfo
+    originalFieldName,
+    fieldInfo: finewFieldldInfo
   });
+
+  const currentFormat = activeDocument.formats.find(format => format.name === recordFormat);
+  if (currentFormat) {
+    const field = currentFormat.fields.find(field => field.name === originalFieldName);
+    for (const propKey in finewFieldldInfo) {
+      const propValue = finewFieldldInfo[propKey];
+
+      field[propKey] = propValue;
+    }
+  }
+
+  renderSpecificField(finewFieldldInfo);
 }

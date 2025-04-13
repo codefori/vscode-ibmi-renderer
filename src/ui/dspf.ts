@@ -1,4 +1,6 @@
 
+export interface DdsLineRange { start: number, end: number };
+
 export class DisplayFile {
   public formats: RecordInfo[] = [];
   public currentField: FieldInfo | undefined;
@@ -113,17 +115,19 @@ export class DisplayFile {
                   break;
               }
 
+              this.currentField.type = type;
+
               this.currentField.decimals = 0;
               switch (type) {
                 case "D":
                 case "Z":
                 case "Y":
-                  this.currentField.type = `decimal`;
+                  this.currentField.primitiveType = `decimal`;
                   if (dec !== "") { this.currentField.decimals = Number(dec); }
                   break;
                 case `L`: //Date
                   this.currentField.length = 8;
-                  this.currentField.type = `char`;
+                  this.currentField.primitiveType = `char`;
                   this.currentField.keywords.push({
                     name: `DATE`,
                     value: undefined,
@@ -132,7 +136,7 @@ export class DisplayFile {
                   break;
                 case `T`: //Time
                   this.currentField.length = 8;
-                  this.currentField.type = `char`;
+                  this.currentField.primitiveType = `char`;
                   this.currentField.keywords.push({
                     name: `TIME`,
                     value: undefined,
@@ -140,7 +144,7 @@ export class DisplayFile {
                   });
                   break;
                 default:
-                  this.currentField.type = `char`;
+                  this.currentField.primitiveType = `char`;
                   break;
               }
 
@@ -331,11 +335,77 @@ export class DisplayFile {
 
     return result;
   }
+
+  public updateField(recordFormat: string, originalFieldName: string, fieldInfo: FieldInfo): { newLines: string[], range?: DdsLineRange }|undefined {
+    const newLines: string[] = [];
+
+    const FIELD_TYPE: { [name in DisplayType]: string } = {
+      both: 'B',
+      input: "I",
+      output: "O",
+      const: "",
+      hidden: "H"
+    };
+
+    const x = String(fieldInfo.position.x).padStart(3, ` `);
+    const y = String(fieldInfo.position.y).padStart(3, ` `);
+    const displayType = FIELD_TYPE[fieldInfo.displayType!];
+
+    if (fieldInfo.displayType === `const`) {
+      const value = fieldInfo.value;
+      newLines.push(
+        `     A                                ${y}${x}'${value}'`,
+      );
+    } else if (displayType && fieldInfo.name) {
+      const definitionType = fieldInfo.type;
+      const length = String(fieldInfo.length).padStart(5);
+      const decimals = String(fieldInfo.decimals).padStart(2);
+      newLines.push(
+        `     A            ${fieldInfo.name.padEnd(10)} ${length}${definitionType}${decimals}${displayType}${y}${x}`,
+      );
+    }
+
+    for (const keyword of fieldInfo.keywords) {
+      // TODO: support conditions
+      newLines.push(
+        `     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`,
+      );
+    }
+
+    let range: DdsLineRange|undefined = undefined;
+
+    const currentFormatI = this.formats.findIndex(format => format.name === recordFormat);
+    if (currentFormatI > 0) {
+      const currentFormat = this.formats[currentFormatI];
+      const index = currentFormat.fields.findIndex(field => field.name === originalFieldName);
+      
+      if (index !== -1) {
+        const fieldStart = currentFormat.fields[index].startRange;
+        let fieldEnd: number|undefined = undefined;
+
+        if (currentFormat.fields[index+1]) {
+          fieldEnd = currentFormat.fields[index+1].startRange;
+        } else {
+          fieldEnd = currentFormat.range.end;
+        }
+
+        if (fieldEnd) {
+          fieldEnd--;
+
+          range = { start: fieldStart, end: fieldEnd };
+        }
+
+        currentFormat.fields[index] = fieldInfo;
+      }
+    }
+
+    return { newLines, range };
+  }
 }
 
 export class RecordInfo {
   public fields: FieldInfo[] = [];
-  public range: { start: number, end: number } = { start: -1, end: -1 };
+  public range: DdsLineRange = { start: -1, end: -1 };
   public isWindow: boolean = false;
   public windowReference: string | undefined = undefined;
   public windowSize: { y: number, x: number, width: number, height: number } = { y: 0, x: 0, width: 80, height: 24 };
@@ -403,12 +473,15 @@ export class RecordInfo {
   }
 }
 
-interface Keyword { name: string, value?: string, conditions: Conditional[] };
+export interface Keyword { name: string, value?: string, conditions: Conditional[] };
+
+export type DisplayType = "input" | "output" | "both" | "const" | "hidden";
 
 export class FieldInfo {
   public value: string | undefined;
-  public type: "char" | "decimal" | undefined;
-  public displayType: "input" | "output" | "both" | "const" | "hidden" | undefined;
+  public type: string | undefined
+  public primitiveType: "char" | "decimal" | undefined;
+  public displayType: DisplayType | undefined;
   public length: number = 0;
   public decimals: number = 0;
   public position: { x: number, y: number } = { x: 0, y: 0 };

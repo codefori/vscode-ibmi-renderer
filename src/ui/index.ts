@@ -1,12 +1,13 @@
 import { readFile, readFileSync } from "fs";
-import { WebviewViewProvider, WebviewView, Uri, CancellationToken, WebviewViewResolveContext, Webview, DiagnosticSeverity, window, WebviewPanel, ViewColumn, ExtensionContext, workspace, TextDocument } from "vscode";
+import { WebviewViewProvider, WebviewView, Uri, CancellationToken, WebviewViewResolveContext, Webview, DiagnosticSeverity, window, WebviewPanel, ViewColumn, ExtensionContext, workspace, TextDocument, TextEdit, Range, WorkspaceEdit } from "vscode";
 import { basename } from "path";
-import { DisplayFile } from "./dspf";
+import { DisplayFile, FieldInfo } from "./dspf";
 
 
 export class RendererWebview {
   private view: WebviewPanel;
   private document: TextDocument|undefined;
+  private dds: DisplayFile|undefined;
 
   private get extensionPath() {
     return this.context.extensionUri;
@@ -44,12 +45,12 @@ export class RendererWebview {
     this.document = await workspace.openTextDocument(this.workingUri);
     const content = this.document.getText();
   
-    const dds = new DisplayFile();
-    dds.parse(content.split(/\r?\n/));
+    this.dds = new DisplayFile();
+    this.dds.parse(content.split(/\r?\n/));
 
     this.view.webview.postMessage({
       command: "load",
-      dds: dds,
+      dds: this.dds,
     });
   }
 
@@ -60,6 +61,29 @@ export class RendererWebview {
   }
 
   private onDidGetMessage(message: any) {
+    switch (message.command) {
+      case `updateField`:
+        const {recordFormat, originalFieldName, fieldInfo} = message;
+
+        if (typeof recordFormat === `string` && typeof originalFieldName === `string` && typeof fieldInfo === `object`) {
+          const fieldUpdate = this.dds?.updateField(recordFormat, originalFieldName, fieldInfo);
+
+          if (fieldUpdate) {
+            if (fieldUpdate.range && this.document) {
+              const workspaceEdit = new WorkspaceEdit();
+              workspaceEdit.replace(
+                this.document.uri, 
+                new Range(fieldUpdate.range.start, 0, fieldUpdate.range.end, 1000), 
+                fieldUpdate.newLines.join('\n'), // TOOD: use the correct EOL?
+                {label: `Update DDS Field`, needsConfirmation: false} 
+              );
+
+              workspace.applyEdit(workspaceEdit);
+            }
+          }
+        }
+        break;
+    }
   }
 
   private getBaseHtml(webview: Webview) {

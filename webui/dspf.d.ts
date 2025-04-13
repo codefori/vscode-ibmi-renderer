@@ -1,8 +1,12 @@
+export interface DdsLineRange {
+    start: number;
+    end: number;
+}
 export declare class DisplayFile {
     formats: RecordInfo[];
-    private currentField;
-    private currentFields;
-    private currentRecord;
+    currentField: FieldInfo | undefined;
+    currentFields: FieldInfo[];
+    currentRecord: RecordInfo | undefined;
     constructor();
     /**
     * @param {string[]} lines
@@ -22,14 +26,15 @@ export declare class DisplayFile {
         keywords: Keyword[];
         conditions: Conditional[];
     };
+    updateField(recordFormat: string, originalFieldName: string, fieldInfo: FieldInfo): {
+        newLines: string[];
+        range?: DdsLineRange;
+    } | undefined;
 }
 export declare class RecordInfo {
     name: string;
     fields: FieldInfo[];
-    range: {
-        start: number;
-        end: number;
-    };
+    range: DdsLineRange;
     isWindow: boolean;
     windowReference: string | undefined;
     windowSize: {
@@ -43,17 +48,19 @@ export declare class RecordInfo {
     constructor(name: string);
     handleKeywords(): void;
 }
-interface Keyword {
+export interface Keyword {
     name: string;
     value?: string;
     conditions: Conditional[];
 }
+export type DisplayType = "input" | "output" | "both" | "const" | "hidden";
 export declare class FieldInfo {
     startRange: number;
     name?: string | undefined;
     value: string | undefined;
-    type: "char" | "decimal" | undefined;
-    displayType: "input" | "output" | "both" | "const" | "hidden" | undefined;
+    type: string | undefined;
+    primitiveType: "char" | "decimal" | undefined;
+    displayType: DisplayType | undefined;
     length: number;
     decimals: number;
     position: {
@@ -76,4 +83,3 @@ export declare class Conditional {
     negate: boolean;
     constructor(indicator: number, negate?: boolean);
 }
-export {};

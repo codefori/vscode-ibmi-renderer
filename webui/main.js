@@ -125,14 +125,21 @@ function setWindowForFormat(chosenFormat) {
 
             renderWidth = widthInP(Number(width));
             renderHeight = heightInP(Number(height));
+          } else if (parts.length === 1) {
+            switch (parts[0].toUpperCase()) {
+              case '*DS4':
+                renderWidth = 132;
+                renderHeight = 27;
+                break;
+            }
           }
         }
       }
       break;
   }
 
-  var width = renderWidth * pxwPerChar;
-  var height = renderHeight * pxhPerLine;
+  let width = renderWidth * pxwPerChar;
+  let height = renderHeight * pxhPerLine;
 
   if (existingStage) {
     existingStage.destroy();

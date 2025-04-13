@@ -134,9 +134,14 @@ function setWindowForFormat(chosenFormat) {
     fill: colours.BLK
   });
 
-  var layer = new Konva.Layer({
+  bg.on('pointerclick', () => {
+    setActiveField();
+  });
+
+  let layer = new Konva.Layer({
     id: selectedFormat.name
   });
+
   layer.add(bg);
 
   renderSelectedFormat(layer, selectedFormat);
@@ -361,7 +366,7 @@ function getElement(fieldInfo, displayOnly = false) {
   boxInfo.width = widthInP(displayLength);
   labelInfo.width = widthInP(displayLength);
 
-  var group = new Konva.Group(boxInfo);
+  let group = new Konva.Group(boxInfo);
 
   group.add(new Konva.Rect({
     id: `bg`,
@@ -377,7 +382,9 @@ function getElement(fieldInfo, displayOnly = false) {
     text: displayValue,
     fontSize: 14,
     fontFamily: `Consolas, "Liberation Mono", Menlo, Courier, monospace`,
-    fill: labelInfo.colour
+    fill: labelInfo.colour,
+    fontStyle: labelInfo.fontStyle,
+    textDecoration: labelInfo.textDecoration,
   }));
 
   if (!displayOnly) {
@@ -517,7 +524,11 @@ function updateRecordFormatSidebar(recordInfo) {
 
 function clearFieldInfo() {
   const sidebar = document.getElementById(`fieldInfoSidebar`);
-  sidebar.style.display = `none`;
+  sidebar.innerHTML = `        
+  <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+    <span>Select a field to edit.</span>
+  </div>
+  `;
 }
 
 /**
@@ -542,7 +553,7 @@ function updateSelectedFieldSidebar(fieldInfo) {
     { name: `Position`, value: `${fieldInfo.position.x}, ${fieldInfo.position.y}` },
   );
 
-  if (fieldInfo.value !== undefined) {
+  if (fieldInfo.displayType === `const`) {
     properties.push({ name: `Value`, value: fieldInfo.value, editableId: `value` });
   }
 
@@ -551,6 +562,10 @@ function updateSelectedFieldSidebar(fieldInfo) {
       { name: `Type`, value: fieldInfo.type },
       { name: `Length`, value: fieldInfo.length, editableId: `length` },
     );
+
+    if (fieldInfo.type !== `A`) {
+      properties.push({ name: `Decimals`, value: fieldInfo.decimals, editableId: `decimals` });
+    }
   }
 
   const propertyRows = properties.map(property => {
@@ -627,21 +642,12 @@ function updateSelectedFieldSidebar(fieldInfo) {
       previousField[valueKey] = value;
     }
 
-    for (const propKey in newDetail.keywords) {
-      const propValue = newDetail.keywords[propKey];
-
-      const keyword = previousField.keywords.find(keyword => keyword.name === propKey);
-      if (keyword) {
-        keyword.value = propValue;
-      }
-    }
+    previousField.keywords = newDetail.keywords;
 
     sendFieldUpdate(lastSelectedFormat, originalName, previousField);
   });
   
   sidebar.appendChild(button);
-
-  sidebar.style.display = `block`;
 }
 
 /**

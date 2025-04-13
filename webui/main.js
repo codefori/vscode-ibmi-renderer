@@ -393,17 +393,48 @@ function getElement(fieldInfo, displayOnly = false) {
 
   let group = new Konva.Group(boxInfo);
 
-  group.on(`dragend`, e => {
-    // const {x, y} = e.target.attrs;
-    // get mouse x,y
+  group.on('dragmove', (e) => {
+    /** @type {Group} */
+    const cGroup = e.target;
+
     /** @type {Stage} */
     const stage = e.target.getStage();
     const mousePos = stage.getPointerPosition();
     
-    const {x, y} = mousePos;
+    let {x, y} = mousePos;
+
+    const boxPos = cGroup.absolutePosition();
+    
+    // Mouse pos inside the group
+    x -= (x - boxPos.x);
+    y -= (y - boxPos.y);
 
     const newCords = snapToFixedGrid(x, y);
-    e.target.to({
+
+    cGroup.absolutePosition({
+      x: newCords.x,
+      y: newCords.y
+    });
+  });
+
+  group.on(`dragend`, e => {
+    // const {x, y} = e.target.attrs;
+    // get mouse x,y
+    /** @type {Group} */
+    const cGroup = e.target;
+    const stage = cGroup.getStage();
+    const mousePos = stage.getPointerPosition();
+    
+    let {x, y} = mousePos;
+    const boxPos = cGroup.absolutePosition();
+    
+    // Mouse pos inside the group
+    x -= (x - boxPos.x);
+    y -= (y - boxPos.y);
+
+    const newCords = snapToFixedGrid(x, y);
+    
+    cGroup.absolutePosition({
       x: newCords.x,
       y: newCords.y
     });

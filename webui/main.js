@@ -103,6 +103,7 @@ function setWindowForFormat(chosenFormat) {
   let renderWidth = 80;
   let renderHeight = 24;
 
+  const globalFormat = activeDocument.formats.find(currentFormat => currentFormat.name === `GLOBAL`);
   const selectedFormat = activeDocument.formats.find(currentFormat => currentFormat.name === chosenFormat);
 
   if (!selectedFormat) {
@@ -112,8 +113,6 @@ function setWindowForFormat(chosenFormat) {
 
   switch (activeDocumentType) {
     case `dds.dspf`:
-      const globalFormat = activeDocument.formats.find(currentFormat => currentFormat.name === `GLOBAL`);
-
       if (globalFormat) {
         const displaySize = globalFormat.keywords.find(keyword => keyword.name === `DSPSIZ`);
 
@@ -172,7 +171,7 @@ function setWindowForFormat(chosenFormat) {
   renderSelectedFormat(layer, selectedFormat);
   existingStage.add(layer);
 
-  updateRecordFormatSidebar(selectedFormat);
+  updateRecordFormatSidebar(selectedFormat, globalFormat);
   setActiveField();
 }
 
@@ -745,14 +744,26 @@ function setActiveField(konvaElement, fieldInfo) {
 }
 
 /**
- * 
  * @param {RecordInfo} recordInfo
+ * @param {RecordInfo} [globalInfo]
  */
-function updateRecordFormatSidebar(recordInfo) {
+function updateRecordFormatSidebar(recordInfo, globalInfo) {
   const sidebar = document.getElementById(`recordFormatSidebar`);
 
   /** @type {{title: string, html: string, open?: boolean}[]} */
   let sections = [];
+
+  if (globalInfo) {
+    const fileKeywordRows = globalInfo.keywords.map(keyword => {
+      return `<vscode-table-row><vscode-table-cell>${keyword.name}</vscode-table-cell><vscode-table-cell>${keyword.value ? `<code>${keyword.value}</code>` : ``}</vscode-table-cell></vscode-table-row>`;
+    }).join(``);
+
+    sections.push({
+      title: `Global Keywords`,
+      html: `<vscode-table><vscode-table-body slot="body">${fileKeywordRows}</vscode-table-body></vscode-table>`,
+      open: false
+    });
+  }
 
   const keywordRows = recordInfo.keywords.map(keyword => {
     return `<vscode-table-row><vscode-table-cell>${keyword.name}</vscode-table-cell><vscode-table-cell>${keyword.value ? `<code>${keyword.value}</code>` : ``}</vscode-table-cell></vscode-table-row>`;

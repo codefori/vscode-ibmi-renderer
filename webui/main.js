@@ -782,11 +782,32 @@ function updateRecordFormatSidebar(recordInfo, globalInfo) {
 
 function clearFieldInfo() {
   const sidebar = document.getElementById(`fieldInfoSidebar`);
-  sidebar.innerHTML = `        
-  <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-    <span>Select a field to edit.</span>
-  </div>
-  `;
+  sidebar.innerHTML = ``;
+
+  const createButton = (label, icon) => {
+    const button = document.createElement(`vscode-button`);
+    button.setAttribute(`secondary`, `true`);
+    button.setAttribute(`icon`, icon);
+    button.style.margin = `1em`;
+    button.style.display = `block`;
+    button.style.textAlign = `right`;
+    button.innerText = label;
+    sidebar.appendChild(button);
+
+    return button;
+  }
+
+  // Creates: <vscode-button secondary>Secondary button</vscode-button>
+  
+  sidebar.appendChild(createButton(`Named field`, `add`));
+  sidebar.appendChild(createButton(`Date field`, `calendar`));
+  sidebar.appendChild(createButton(`Time field`, `calendar`));
+  sidebar.appendChild(createButton(`Timestamp field`, `calendar`));
+
+  sidebar.appendChild(createButton(`Constant text`, `symbol-constant`));
+  sidebar.appendChild(createButton(`System name constant`, `account`));
+  sidebar.appendChild(createButton(`Date constant`, `calendar`));
+  sidebar.appendChild(createButton(`Time constant`, `calendar`));
 }
 
 /**

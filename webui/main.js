@@ -3,6 +3,9 @@
  * @typedef {import('./dspf.d.ts').RecordInfo} RecordInfo
  * @typedef {import('./dspf.d.ts').FieldInfo} FieldInfo
  * @typedef {import('./dspf.d.ts').Keyword} Keyword
+ * @typedef {import("konva").default.Rect} Rect
+ * @typedef {import("konva").default.Stage} Stage
+ * @typedef {import("konva").default.Group} Group
  */
 
 const colours = {
@@ -58,6 +61,7 @@ let activeDocumentType = undefined;
 /** @type {string|undefined} */
 let lastSelectedFormat = undefined;
 
+/** @type {Stage|undefined} */
 let existingStage = undefined;
 
 /**
@@ -232,6 +236,11 @@ function addFieldsToLayer(layer, format) {
   });
 }
 
+/**
+ * 
+ * @param {FieldInfo} fieldInfo 
+ * @returns {Konva.Group|undefined}
+ */
 function renderSpecificField(fieldInfo) {
   const existingField = existingStage.findOne(`#${fieldInfo.name}`);
 
@@ -244,6 +253,8 @@ function renderSpecificField(fieldInfo) {
   if (formatLayer) {
     const content = getElement(fieldInfo);
     formatLayer.add(content);
+
+    return content;
   }
 }
 
@@ -466,6 +477,7 @@ window.onload = () => {
   });
 };
 
+/** @type {Rect|undefined} */
 let lastActiveKonvaElement;
 
 /**
@@ -653,25 +665,29 @@ function updateSelectedFieldSidebar(fieldInfo) {
 /**
  * @param {string} recordFormat 
  * @param {string} originalFieldName 
- * @param {FieldInfo} finewFieldldInfo 
+ * @param {FieldInfo} newFieldInfo 
  */
-function sendFieldUpdate(recordFormat, originalFieldName, finewFieldldInfo) {
+function sendFieldUpdate(recordFormat, originalFieldName, newFieldInfo) {
   vscode.postMessage({
     command: `updateField`,
     recordFormat,
     originalFieldName,
-    fieldInfo: finewFieldldInfo
+    fieldInfo: newFieldInfo
   });
 
   const currentFormat = activeDocument.formats.find(format => format.name === recordFormat);
   if (currentFormat) {
     const field = currentFormat.fields.find(field => field.name === originalFieldName);
-    for (const propKey in finewFieldldInfo) {
-      const propValue = finewFieldldInfo[propKey];
+    for (const propKey in newFieldInfo) {
+      const propValue = newFieldInfo[propKey];
 
       field[propKey] = propValue;
     }
   }
 
-  renderSpecificField(finewFieldldInfo);
+  const newGroup = renderSpecificField(newFieldInfo);
+
+  if (newGroup) {
+    setActiveField(newGroup, newFieldInfo);
+  }
 }

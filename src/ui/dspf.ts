@@ -27,7 +27,7 @@ export class DisplayFile {
       conditionals = line.substring(6, 16).padEnd(10);
       name = line.substring(18, 28).trim();
       len = line.substring(29, 34).trim();
-      type = line[34].toUpperCase();
+      type = line[34].toUpperCase().trim();
       dec = line.substring(35, 37).trim();
       inout = line[37].toUpperCase();
       y = line.substring(38, 41).trim();
@@ -91,6 +91,18 @@ export class DisplayFile {
             this.currentField.position = {
               x: totalX,
               y: 0
+            };
+          } else if (name !== undefined && type !== "") {
+            // Some fields have no positions
+            if (this.currentField) {
+              this.currentField.handleKeywords();
+              this.currentFields.push(this.currentField);
+            }
+
+            this.currentField = new FieldInfo(index, name);
+            this.currentField.position = {
+              x: -1,
+              y: -1
             };
           }
 

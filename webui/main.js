@@ -6,6 +6,7 @@
  * @typedef {import("konva").default.Rect} Rect
  * @typedef {import("konva").default.Stage} Stage
  * @typedef {import("konva").default.Group} Group
+ * @typedef {import("konva").default.Layer} Layer
  */
 
 const colours = {
@@ -170,11 +171,171 @@ function setWindowForFormat(chosenFormat) {
 
 /**
  * 
- * @param {*} layer 
+ * @param {Layer} layer 
  * @param {RecordInfo} [format] 
  */
 function renderSelectedFormat(layer, format) {
   lastSelectedFormat = format.name;
+
+  /** @type {RecordInfo|undefined} */
+  let windowFormat;
+
+  /** @type {{baseX: number, baseY: number, baseWidth: number, baseHeight: number, x: number, y: number, width: number, height: number, color?: string}|undefined} */
+  let windowConfig;
+
+  /** @type {FieldInfo|undefined} */
+  let windowTitle;
+
+  /** @type {RecordInfo} */
+  let recordFormat;
+  if (format) {
+    recordFormat = activeDocument.formats.find(currentFormat => currentFormat.name === lastSelectedFormat);
+  }
+
+  if (recordFormat) {
+    if (recordFormat.isWindow) {
+      if (recordFormat.windowReference) {
+        windowFormat = activeDocument.formats.find(currentFormat => currentFormat.name === recordFormat.windowReference);
+      } else {
+        windowFormat = recordFormat;
+      }
+
+      const { x, y, width, height } = windowFormat.windowSize;
+      windowConfig = {
+        baseX: x,
+        baseY: y,
+        baseWidth: width,
+        baseHeight: height, 
+        x: widthInP(x),
+        y: heightInP(y),
+        width: widthInP(width),
+        height: heightInP(height-1)
+      };
+
+      const borderInfo = windowFormat.keywords.find(keyword => keyword.name === `WDWBORDER`);
+      if (borderInfo) {
+        parts = parseParms(borderInfo.value);
+
+        parts.forEach((part, index) => {
+          switch (part.toUpperCase()) {
+          case `*COLOR`:
+            windowConfig.color = parts[index + 1];
+            break;
+          }
+        });
+      }
+
+      const windowInfo = windowFormat.keywords.find(keyword => keyword.name === `WDWTITLE`);
+      if (windowInfo) {
+        windowTitle = {
+          name: `WINDOWTITLE`,
+          displayType: `const`,
+          type: `A`,
+          primitiveType: `char`
+        };
+
+        let xPositionValue = `center`;
+        let yPositionValue = `top`;
+
+        parts = Render.parseParms(windowInfo.value);
+
+        parts.forEach((part, index) => {
+          switch (part.toUpperCase()) {
+          case `*TEXT`:
+            windowTitle.value = parts[index + 1];
+            break;
+          case `*COLOR`:
+            windowTitle.keywords.push({
+              name: `COLOR`,
+              value: parts[index + 1],
+              conditions: []
+            });
+          case `*DSPATR`:
+            windowTitle.keywords.push({
+              name: `DSPATR`,
+              value: parts[index + 1],
+              conditions: []
+            });
+            break;
+
+          case `*CENTER`:
+          case `*LEFT`:
+          case `*RIGHT`:
+            xPositionValue = part.substring(1).toLowerCase();
+            break;
+
+          case `*TOP`:
+          case `*BOTTOM`:
+            yPositionValue = part.substring(1).toLowerCase();
+            break;
+          }
+        });
+
+        // If no color is found, the default is blue.
+        if (!windowTitle.keywords.find(keyword => keyword.name === `COLOR`)) {
+          windowTitle.keywords.push({
+            name: `COLOR`,
+            value: `BLU`,
+            conditions: []
+          });
+        }
+
+        const txtLength = windowTitle.value.length;
+
+        const yPosition = (windowConfig.baseY) + (yPositionValue === `top` ? 0 : windowConfig.baseHeight);
+        let xPosition = (windowConfig.baseX + 1);
+
+        switch (xPositionValue) {
+        case `center`:
+          xPosition = (windowConfig.baseX + 1) + Math.floor((windowConfig.baseWidth / 2) - (txtLength / 2));
+          break;
+        case `right`:
+          xPosition = (windowConfig.baseX + 1) + windowConfig.baseWidth - txtLength;
+          break;
+        case `left`:
+          xPosition = (windowConfig.baseX + 1);
+          break;
+        }
+
+        windowTitle.position = {
+          x: xPosition,
+          y: yPosition
+        };
+      }
+    }
+  }
+
+  if (windowFormat) {
+    // If this is a window, add the window CSS
+      if (windowConfig) {
+        const windowColor = colors[windowConfig.color] || colors.BLU;
+
+        /** @type {Rect} */
+        const windowRect = new Konva.Rect({
+          id: windowFormat.name,
+          x: windowConfig.x,
+          y: windowConfig.y,
+          width: windowConfig.width,
+          height: windowConfig.height,
+          stroke: windowColor,
+        });
+
+        layer.add(windowRect);
+      }
+
+      if (windowTitle) {
+        console.log(`TODO: add window title: ${windowFormat}`);
+        // const windowContent = this.getContent(windowTitle);
+
+        // css += windowContent.css;
+        // body += windowContent.body;
+      }
+
+      if (windowFormat.name !== format.name) {
+        renderSelectedFormat(layer, windowFormat);
+      }
+    }
+
   // TODO: handle window
   // TODO: make format optional
   if (format) {
@@ -198,7 +359,7 @@ function addFieldsToLayer(layer, format) {
     const subfileRecord = activeDocument.formats.find(format => format.name === subfileFormat.value);
 
     if (subfileRecord) {
-      const subfileFields = subfileRecord.fields.filter(field => field.displayType !== `hidden`);
+      const subfileFields = subfileRecord.fields.filter(field => field.displayType !== `hidden` && field.position.x > 0 && field.position.y > 0);
       
       const low = Math.min(...subfileFields.map(field => field.position.y));
       const high = Math.max(...subfileFields.map(field => field.position.y));

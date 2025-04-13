@@ -44,6 +44,19 @@ const pxwPerChar = 8.45;
 const pxhPerLine = 20;
 const pxhPerChar = 12.5;
 
+function snapToFixedGrid(x, y) {
+  const newX = Math.round(x / pxwPerChar) * pxwPerChar;
+  const newY = Math.round(y / pxhPerLine) * pxhPerLine;
+  return {x: newX, y: newY};
+}
+
+function gridCordsToFieldCords(x, y) {
+  return {
+    x: Math.round(x / pxwPerChar) + 1,
+    y: Math.round(y / pxhPerLine) + 1
+  };
+}
+
 function widthInP(x) {
   return x * pxwPerChar;
 }
@@ -268,6 +281,7 @@ function getElement(fieldInfo, displayOnly = false) {
     y: heightInP(fieldInfo.position.y - 1),
     width: 0,
     height: heightInP(1),
+    draggable: !displayOnly,
   };
 
   const labelInfo = {
@@ -378,6 +392,28 @@ function getElement(fieldInfo, displayOnly = false) {
   labelInfo.width = widthInP(displayLength);
 
   let group = new Konva.Group(boxInfo);
+
+  group.on(`dragend`, e => {
+    // const {x, y} = e.target.attrs;
+    // get mouse x,y
+    /** @type {Stage} */
+    const stage = e.target.getStage();
+    const mousePos = stage.getPointerPosition();
+    
+    const {x, y} = mousePos;
+
+    const newCords = snapToFixedGrid(x, y);
+    e.target.to({
+      x: newCords.x,
+      y: newCords.y
+    });
+
+    const fieldCords = gridCordsToFieldCords(newCords.x, newCords.y);
+    fieldInfo.position.x = fieldCords.x;
+    fieldInfo.position.y = fieldCords.y;
+
+    sendFieldUpdate(lastSelectedFormat, fieldInfo.name, fieldInfo);
+  });
 
   group.add(new Konva.Rect({
     id: `bg`,

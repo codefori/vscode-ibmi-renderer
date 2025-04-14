@@ -533,9 +533,9 @@ function getElement(fieldInfo, displayOnly = false) {
     }
   });
 
-  let padString = `-`;
+  let padString = `_`;
 
-  switch (fieldInfo.type) {
+  switch (fieldInfo.primitiveType) {
     case `char`:
       switch (fieldInfo.displayType) {
         case `input`: padString = `I`; break;

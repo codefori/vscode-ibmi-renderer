@@ -82,17 +82,19 @@ let existingStage = undefined;
  * @param {DisplayFile} newDoc 
  * @param {"dds.dspf"} type //TODO: support dds.prtf
  */
-function loadDDS(newDoc, type) {
+function loadDDS(newDoc, type, withRerender = true) {
   activeDocument = newDoc;
   activeDocumentType = type;
 
-  const validFormats = activeDocument.formats.filter(format => format.name !== `GLOBAL`);
+  if (withRerender) {
+    const validFormats = activeDocument.formats.filter(format => format.name !== `GLOBAL`);
 
-  setTabs(validFormats.map(format => format.name), lastSelectedFormat);
+    setTabs(validFormats.map(format => format.name), lastSelectedFormat);
 
-  const chosenFormat = lastSelectedFormat || (validFormats[0] ? validFormats[0].name : undefined);
-  if (chosenFormat) {
-    setWindowForFormat(chosenFormat);
+    const chosenFormat = lastSelectedFormat || (validFormats[0] ? validFormats[0].name : undefined);
+    if (chosenFormat) {
+      setWindowForFormat(chosenFormat);
+    }
   }
 }
 
@@ -693,6 +695,9 @@ window.addEventListener("message", (event) => {
     case `load`:
       loadDDS(event.data.dds, `dds.dspf`);
       break;
+    case 'update':
+      loadDDS(event.data.dds, `dds.dspf`, false);
+      break;
   }
 });
 
@@ -784,7 +789,12 @@ function clearFieldInfo() {
   const sidebar = document.getElementById(`fieldInfoSidebar`);
   sidebar.innerHTML = ``;
 
-  const createButton = (label, icon) => {
+  /**
+   * @param {string} label 
+   * @param {string} icon 
+   * @param {FieldInfo} field 
+   */
+  const createButton = (label, icon, field) => {
     const button = document.createElement(`vscode-button`);
     button.setAttribute(`secondary`, `true`);
     button.setAttribute(`icon`, icon);
@@ -793,6 +803,12 @@ function clearFieldInfo() {
     button.style.textAlign = `right`;
     button.innerText = label;
     sidebar.appendChild(button);
+
+    button.onclick = () => {
+      if (lastSelectedFormat) {
+        sendNewField(lastSelectedFormat, field);
+      }
+    };
 
     return button;
   }
@@ -804,7 +820,12 @@ function clearFieldInfo() {
   sidebar.appendChild(createButton(`Time field`, `calendar`));
   sidebar.appendChild(createButton(`Timestamp field`, `calendar`));
 
-  sidebar.appendChild(createButton(`Constant text`, `symbol-constant`));
+  sidebar.appendChild(createButton(`Constant text`, `symbol-constant`, {
+    value: `Constant`,
+    position: {x: 1, y: 1},
+    displayType: `const`,
+    keywords: [],
+  }));
   sidebar.appendChild(createButton(`System name constant`, `account`));
   sidebar.appendChild(createButton(`Date constant`, `calendar`));
   sidebar.appendChild(createButton(`Time constant`, `calendar`));
@@ -931,6 +952,18 @@ function updateSelectedFieldSidebar(fieldInfo) {
 
 /**
  * @param {string} recordFormat 
+ * @param {FieldInfo} fieldInfo 
+ */
+function sendNewField(recordFormat, fieldInfo) {
+  vscode.postMessage({
+    command: `newField`,
+    recordFormat,
+    fieldInfo
+  });
+}
+
+/**
+ * @param {string} recordFormat 
  * @param {string} originalFieldName 
  * @param {FieldInfo} newFieldInfo 
  */
@@ -942,15 +975,15 @@ function sendFieldUpdate(recordFormat, originalFieldName, newFieldInfo) {
     fieldInfo: newFieldInfo
   });
 
-  const currentFormat = activeDocument.formats.find(format => format.name === recordFormat);
-  if (currentFormat) {
-    const field = currentFormat.fields.find(field => field.name === originalFieldName);
-    for (const propKey in newFieldInfo) {
-      const propValue = newFieldInfo[propKey];
+  // const currentFormat = activeDocument.formats.find(format => format.name === recordFormat);
+  // if (currentFormat) {
+  //   const field = currentFormat.fields.find(field => field.name === originalFieldName);
+  //   for (const propKey in newFieldInfo) {
+  //     const propValue = newFieldInfo[propKey];
 
-      field[propKey] = propValue;
-    }
-  }
+  //     field[propKey] = propValue;
+  //   }
+  // }
 
   const newGroup = renderSpecificField(newFieldInfo);
 

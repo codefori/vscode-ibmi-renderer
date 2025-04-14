@@ -1,5 +1,5 @@
 import { readFile, readFileSync } from "fs";
-import { WebviewViewProvider, WebviewView, Uri, CancellationToken, WebviewViewResolveContext, Webview, DiagnosticSeverity, window, WebviewPanel, ViewColumn, ExtensionContext, workspace, TextDocument, TextEdit, Range, WorkspaceEdit } from "vscode";
+import { WebviewViewProvider, WebviewView, Uri, CancellationToken, WebviewViewResolveContext, Webview, DiagnosticSeverity, window, WebviewPanel, ViewColumn, ExtensionContext, workspace, TextDocument, TextEdit, Range, WorkspaceEdit, Position } from "vscode";
 import { basename } from "path";
 import { DisplayFile, FieldInfo } from "./dspf";
 
@@ -41,7 +41,7 @@ export class RendererWebview {
     this.view = panel;
   }
 
-  async load() {
+  async load(rerender = true) {
     this.document = await workspace.openTextDocument(this.workingUri);
     const content = this.document.getText();
   
@@ -49,7 +49,7 @@ export class RendererWebview {
     this.dds.parse(content.split(/\r?\n/));
 
     this.view.webview.postMessage({
-      command: "load",
+      command: rerender ? "load" : "update",
       dds: this.dds,
     });
   }
@@ -60,10 +60,40 @@ export class RendererWebview {
     }
   }
 
-  private onDidGetMessage(message: any) {
+  private async onDidGetMessage(message: any) {
+    let recordFormat: string|undefined;
+    let fieldInfo: FieldInfo|undefined;
+
     switch (message.command) {
+      case 'newField':
+        recordFormat = message.recordFormat;
+        fieldInfo = message.fieldInfo;
+
+        if (typeof recordFormat === `string` && typeof fieldInfo === `object`) {
+          const newField = this.dds?.updateField(recordFormat, undefined, fieldInfo);
+
+          if (newField) {
+            if (newField.range && this.document) {
+              const workspaceEdit = new WorkspaceEdit();
+              workspaceEdit.insert(
+                this.document.uri, 
+                new Position(newField.range.start, 0),
+                newField.newLines.join('\n') + `\n`, // TOOD: use the correct EOL?
+                {label: `Add DDS Field`, needsConfirmation: false} 
+              );
+
+              if (await workspace.applyEdit(workspaceEdit)) {
+                this.load(true);
+              }
+            }
+          }
+        }
+
+        break;
       case `updateField`:
-        const {recordFormat, originalFieldName, fieldInfo} = message;
+        recordFormat = message.recordFormat;
+        const originalFieldName = message.originalFieldName;
+        fieldInfo = message.fieldInfo;
 
         if (typeof recordFormat === `string` && typeof originalFieldName === `string` && typeof fieldInfo === `object`) {
           const fieldUpdate = this.dds?.updateField(recordFormat, originalFieldName, fieldInfo);
@@ -78,7 +108,8 @@ export class RendererWebview {
                 {label: `Update DDS Field`, needsConfirmation: false} 
               );
 
-              workspace.applyEdit(workspaceEdit);
+              await workspace.applyEdit(workspaceEdit);
+              this.load(false);
             }
           }
         }

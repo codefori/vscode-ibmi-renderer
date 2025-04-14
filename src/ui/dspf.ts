@@ -348,7 +348,7 @@ export class DisplayFile {
     return result;
   }
 
-  public updateField(recordFormat: string, originalFieldName: string, fieldInfo: FieldInfo): { newLines: string[], range?: DdsLineRange }|undefined {
+  public getLinesForField(field: FieldInfo): string[] {
     const newLines: string[] = [];
 
     const FIELD_TYPE: { [name in DisplayType]: string } = {
@@ -359,39 +359,46 @@ export class DisplayFile {
       hidden: "H"
     };
 
-    const x = String(fieldInfo.position.x).padStart(3, ` `);
-    const y = String(fieldInfo.position.y).padStart(3, ` `);
-    const displayType = FIELD_TYPE[fieldInfo.displayType!];
+    const x = String(field.position.x).padStart(3, ` `);
+    const y = String(field.position.y).padStart(3, ` `);
+    const displayType = FIELD_TYPE[field.displayType!];
 
-    if (fieldInfo.displayType === `const`) {
-      const value = fieldInfo.value;
+    if (field.displayType === `const`) {
+      const value = field.value;
       newLines.push(
         `     A                                ${y}${x}'${value}'`,
       );
-    } else if (displayType && fieldInfo.name) {
-      const definitionType = fieldInfo.type;
-      const length = String(fieldInfo.length).padStart(5);
-      const decimals = String(fieldInfo.decimals).padStart(2);
+    } else if (displayType && field.name) {
+      const definitionType = field.type;
+      const length = String(field.length).padStart(5);
+      const decimals = String(field.decimals).padStart(2);
       newLines.push(
-        `     A            ${fieldInfo.name.padEnd(10)} ${length}${definitionType}${decimals}${displayType}${y}${x}`,
+        `     A            ${field.name.padEnd(10)} ${length}${definitionType}${decimals}${displayType}${y}${x}`,
       );
     }
 
-    for (const keyword of fieldInfo.keywords) {
+    for (const keyword of field.keywords) {
       // TODO: support conditions
       newLines.push(
         `     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`,
       );
     }
 
+    return newLines;
+  }
+
+  public updateField(recordFormat: string, originalFieldName: string|undefined, fieldInfo: FieldInfo): { newLines: string[], range?: DdsLineRange }|undefined {
+    const newLines = this.getLinesForField(fieldInfo);
+
     let range: DdsLineRange|undefined = undefined;
 
     const currentFormatI = this.formats.findIndex(format => format.name === recordFormat);
     if (currentFormatI > 0) {
       const currentFormat = this.formats[currentFormatI];
-      const index = currentFormat.fields.findIndex(field => field.name === originalFieldName);
+      const index = originalFieldName ? currentFormat.fields.findIndex(field => field.name === originalFieldName) : -1;
       
-      if (index !== -1) {
+      if (index >= 0) {
+        // Update existing field
         const fieldStart = currentFormat.fields[index].startRange;
         let fieldEnd: number|undefined = undefined;
 
@@ -408,6 +415,10 @@ export class DisplayFile {
         }
 
         currentFormat.fields[index] = fieldInfo;
+      } else {
+        // Add new field
+        currentFormat.fields.push(fieldInfo);
+        range = { start: currentFormat.range.end, end: currentFormat.range.end };
       }
     }
 

@@ -65,6 +65,23 @@ export class RendererWebview {
     let fieldInfo: FieldInfo|undefined;
 
     switch (message.command) {
+      case 'deleteField':
+        recordFormat = message.recordFormat;
+        const fieldName = message.fieldName;
+
+        if (typeof recordFormat === `string` && typeof fieldName === `string`) {
+          const deleteFieldRange = this.dds?.getRangeForField(recordFormat, fieldName);
+
+          if (deleteFieldRange && this.document) {
+            const workspaceEdit = new WorkspaceEdit();
+            workspaceEdit.delete(this.document.uri, new Range(deleteFieldRange.start, 0, deleteFieldRange.end, 1000));
+
+            await workspace.applyEdit(workspaceEdit);
+            this.load(true);
+          }
+        }
+        break;
+        
       case 'newField':
         recordFormat = message.recordFormat;
         fieldInfo = message.fieldInfo;

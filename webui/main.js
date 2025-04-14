@@ -894,15 +894,15 @@ function updateSelectedFieldSidebar(fieldInfo) {
   }).join(``);
 
   // create button
-  const button = document.createElement(`vscode-button`);
-  button.fieldInfo = JSON.parse(JSON.stringify(fieldInfo));
-  button.innerText = `Update`;
+  const updateButton = document.createElement(`vscode-button`);
+  updateButton.fieldInfo = JSON.parse(JSON.stringify(fieldInfo));
+  updateButton.innerText = `Update`;
   
   // Center the button
-  button.style.margin = `1em`;
-  button.style.display = `block`;
+  updateButton.style.margin = `1em`;
+  updateButton.style.display = `block`;
 
-  button.addEventListener(`click`, (e) => {
+  updateButton.addEventListener(`click`, (e) => {
     /** @type {FieldInfo} */
     const previousField = e.target.fieldInfo;
 
@@ -947,7 +947,23 @@ function updateSelectedFieldSidebar(fieldInfo) {
     sendFieldUpdate(lastSelectedFormat, originalName, previousField);
   });
   
-  sidebar.appendChild(button);
+  sidebar.appendChild(updateButton);
+
+  const deleteButton = document.createElement(`vscode-button`);
+  deleteButton.setAttribute(`secondary`, `true`);
+  deleteButton.innerText = `Delete`;
+  
+  // Center the button
+  deleteButton.style.margin = `1em`;
+  deleteButton.style.display = `block`;
+
+  deleteButton.addEventListener(`click`, (e) => {
+    if (fieldInfo.name) {
+      sendDelete(lastSelectedFormat, fieldInfo.name);
+    }
+  });
+
+  sidebar.appendChild(deleteButton);
 }
 
 /**
@@ -959,6 +975,14 @@ function sendNewField(recordFormat, fieldInfo) {
     command: `newField`,
     recordFormat,
     fieldInfo
+  });
+}
+
+function sendDelete(recordFormat, fieldName) {
+  vscode.postMessage({
+    command: `deleteField`,
+    recordFormat,
+    fieldName
   });
 }
 

@@ -387,15 +387,12 @@ export class DisplayFile {
     return newLines;
   }
 
-  public updateField(recordFormat: string, originalFieldName: string|undefined, fieldInfo: FieldInfo): { newLines: string[], range?: DdsLineRange }|undefined {
-    const newLines = this.getLinesForField(fieldInfo);
-
+  public getRangeForField(recordFormat: string, fieldName: string): DdsLineRange|undefined {
     let range: DdsLineRange|undefined = undefined;
-
     const currentFormatI = this.formats.findIndex(format => format.name === recordFormat);
     if (currentFormatI > 0) {
       const currentFormat = this.formats[currentFormatI];
-      const index = originalFieldName ? currentFormat.fields.findIndex(field => field.name === originalFieldName) : -1;
+      const index = currentFormat.fields.findIndex(field => field.name === fieldName);
       
       if (index >= 0) {
         // Update existing field
@@ -414,11 +411,21 @@ export class DisplayFile {
           range = { start: fieldStart, end: fieldEnd };
         }
 
-        currentFormat.fields[index] = fieldInfo;
-      } else {
-        // Add new field
-        currentFormat.fields.push(fieldInfo);
-        range = { start: currentFormat.range.end, end: currentFormat.range.end };
+      }
+    }
+
+    return range;
+  }
+
+  public updateField(recordFormat: string, originalFieldName: string|undefined, fieldInfo: FieldInfo): { newLines: string[], range?: DdsLineRange }|undefined {
+    const newLines = this.getLinesForField(fieldInfo);
+
+    let range = this.getRangeForField(recordFormat, originalFieldName!);
+
+    if (!range) {
+      const recordFormatDetail = this.formats.find(format => format.name === recordFormat);
+      if (recordFormatDetail) {
+        range = { start: recordFormatDetail?.range.end, end: recordFormatDetail.range.end };
       }
     }
 

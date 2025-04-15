@@ -1022,42 +1022,40 @@ function createKeywordPanel(id, keywords, onUpdate) {
     return cell;
   };
 
-  const table = document.createElement(`vscode-table`);
-  table.id = id;
+  const tree = document.createElement(`vscode-tree`);
+  tree.id = id;
 
-  const tableBody = document.createElement(`vscode-table-body`);
-  tableBody.setAttribute(`slot`, `body`);
+  const actions = [
+    {
+      icon: "edit",
+      actionId: "rename",
+      tooltip: "Rename",
+    },
+    {
+      icon: "trash",
+      actionId: "delete",
+      tooltip: "Delete",
+    },
+  ];
 
-  const readonly = onUpdate === undefined;
-  const ROW_PREFIX = `c-row-`;
-  for (let i = 0; i < keywords.length; i++) {
-    const keyword = keywords[i];
-    const row = document.createElement(`vscode-table-row`);
-    row.id = `${ROW_PREFIX}${i}`;
+  tree.data = keywords.map((keyword, index) => {
+    return {
+      icons: {
+        leaf: `account`,
+        open: `delete`,
+        branch: `edit`
+      },
+      label: keyword.name,
+      value: keyword.value,
+      description: keyword.value,
+      actions,
+      subItems: keyword.conditions.map(c => ({
+        label: `${c.indicator} ${c.negate ? `(negated)` : ``}`,
+      })),
+    };
+  });
 
-    // TODO: delete button? on the keyword?
-    const deleteKeywordButton = createDeleteButtonCell(() => {
-      row.remove();
-    });
-
-    // TODO: might be cool to have the keyword validated against a list?
-    const keywordCell = createInputCell(`c-${i}-keyword`, keyword.name, readonly);
-    const valueCell = createInputCell(`c-${i}-value`, keyword.value || ``, readonly);
-    // TODO: Consider how conditions should be handled?
-
-    if (!readonly) {
-      row.appendChild(deleteKeywordButton);
-    }
-
-    row.appendChild(keywordCell);
-    row.appendChild(valueCell);
-
-    tableBody.appendChild(row);
-  }
-
-  table.appendChild(tableBody);
-
-  section.appendChild(table);
+  section.appendChild(tree);
 
   if (onUpdate) {
 

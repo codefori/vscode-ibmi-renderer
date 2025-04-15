@@ -982,7 +982,7 @@ function sendFieldUpdate(recordFormat, originalFieldName, newFieldInfo) {
 }
 
 /**
- * Used to create panels for editable key/value lists
+ * Used to create panels for editable key/value lists.
  * @param {string} id
  * @param {Keyword[]} keywords 
  * @param {(keywords: Keyword[]) => void} [onUpdate]
@@ -1013,12 +1013,11 @@ function createKeywordPanel(id, keywords, onUpdate) {
   const createDeleteButtonCell = (onClick) => {
     const cell = document.createElement(`vscode-table-cell`);
 
-    const button = document.createElement(`vscode-button`);
-    button.setAttribute(`icon`, `trash`);
-    button.setAttribute(`secondary`, `true`);
-    cell.appendChild(button);
-
+    const button = document.createElement(`vscode-icon`);
+    button.setAttribute(`name`, `trash`);
     button.onclick = onClick;
+
+    cell.appendChild(button);
 
     return cell;
   };
@@ -1108,7 +1107,8 @@ function createKeywordPanel(id, keywords, onUpdate) {
 }
 
 /**
- * Used to create a panel for editable properties
+ * Used to create a panel for editable properties.
+ * Properties with the `id` property are editable.
  * @param {string} id 
  * @param {Property[]} properties 
  * @param {(newProps: NewProperties) => {}} onUpdate 

@@ -7,6 +7,8 @@
  * @typedef {import("konva").default.Stage} Stage
  * @typedef {import("konva").default.Group} Group
  * @typedef {import("konva").default.Layer} Layer
+ * @typedef {{label: string, id?: string, value: string}} Property 
+ * @typedef {{[key: string]: string}} NewProperties
  */
 
 const colours = {
@@ -841,51 +843,54 @@ function updateSelectedFieldSidebar(fieldInfo) {
   /** @type {{title: string, html: string|Element, open?: boolean}[]} */
   let sections = [];
 
-  /** @type {{name: string, value: string, editableId?: string}[]} */
+  /** @type {Property[]} */
   const properties = [];
 
   if (fieldInfo.name) {
-    properties.push({ name: `Name`, value: fieldInfo.name });
+    properties.push({ label: `Name`, value: fieldInfo.name });
   }
 
   properties.push(
-    { name: `Display Type`, value: fieldInfo.displayType },
-    { name: `Position`, value: `${fieldInfo.position.x}, ${fieldInfo.position.y}` },
+    { label: `Display Type`, value: fieldInfo.displayType },
+    { label: `Position`, value: `${fieldInfo.position.x}, ${fieldInfo.position.y}` },
   );
 
   if (fieldInfo.displayType === `const`) {
-    properties.push({ name: `Value`, value: fieldInfo.value, editableId: `value` });
+    properties.push({ label: `Value`, value: fieldInfo.value, id: `value` });
   }
 
   if (fieldInfo.type) {
     properties.push(
-      { name: `Type`, value: fieldInfo.type },
-      { name: `Length`, value: fieldInfo.length, editableId: `length` },
+      { label: `Type`, value: fieldInfo.type },
+      { label: `Length`, value: fieldInfo.length, id: `length` },
     );
 
     if (fieldInfo.type !== `A`) {
-      properties.push({ name: `Decimals`, value: fieldInfo.decimals, editableId: `decimals` });
+      properties.push({ label: `Decimals`, value: fieldInfo.decimals, id: `decimals` });
     }
   }
-
-  const propertyRows = properties.map(property => {
-    return `<vscode-table-row><vscode-table-cell>${property.name}</vscode-table-cell><vscode-table-cell ${property.editableId ? `id="field-${property.editableId}" contenteditable="true"` : ``}>${property.value}</vscode-table-cell></vscode-table-row>`;
-  }).join(``);
 
   sections.push(
     {
       title: `Properties`,
+      open: true,
       // TODO: swap this to createKeywordPanel
-      html: `<vscode-table><vscode-table-body slot="body">${propertyRows}</vscode-table-body></vscode-table>`,
-      open: true
+      html: createValuesPanel(`properties-${fieldInfo.name}`, properties, (newProps) => {
+        fieldInfo = {
+          ...fieldInfo,
+          ...newProps
+        };
+
+        sendFieldUpdate(lastSelectedFormat, fieldInfo.name, fieldInfo);
+      })
     },
     {
       title: `Keywords`,
+      open: Object.keys(fieldInfo.keywords).length > 0,
       html: createKeywordPanel(`keywords-${fieldInfo.name}`, fieldInfo.keywords, (keywords) => {
         fieldInfo.keywords = keywords;
         sendFieldUpdate(lastSelectedFormat, fieldInfo.name, fieldInfo);
       }),
-      open: true
     }
   );
 
@@ -1040,7 +1045,14 @@ function createKeywordPanel(id, keywords, onUpdate) {
 
   table.appendChild(tableBody);
 
-  // TODO: add a button to add a new row
+  const newKeyword = document.createElement(`vscode-button`);
+  newKeyword.setAttribute(`icon`, `add`);
+
+  newKeyword.innerText = `New Keyword`;
+  newKeyword.style.margin = `1em`;
+  newKeyword.style.display = `block`;
+
+  // TODO: event listener
 
   const updateButton = document.createElement(`vscode-button`);
   updateButton.innerText = `Update`;
@@ -1074,7 +1086,88 @@ function createKeywordPanel(id, keywords, onUpdate) {
   });
 
   section.appendChild(table);
+  section.appendChild(newKeyword);
   section.appendChild(updateButton);
+
+  return section;
+}
+
+/**
+ * 
+ * @param {string} id 
+ * @param {Property[]} properties 
+ * @param {(newProps: NewProperties) => {}} onUpdate 
+ */
+function createValuesPanel(id, properties, onUpdate) {
+  const section = document.createElement(`div`);
+  section.id = id;
+
+  const createLabelCell = (label) => {
+    const cell = document.createElement(`vscode-table-cell`);
+    cell.innerText = label;
+    return cell;
+  };
+
+  const createInputCell = (id, value, placeHolder) => {
+    const cell = document.createElement(`vscode-table-cell`);
+
+    const input = document.createElement(`code`);
+    input.id = id;
+    input.innerText = value;
+    input.setAttribute(`contenteditable`, `true`);
+
+    cell.appendChild(input);
+
+    return cell;
+  };
+
+  const table = document.createElement(`vscode-table`);
+  table.id = id;
+
+  const tableBody = document.createElement(`vscode-table-body`);
+
+  const hasEditableData = properties.some(prop => prop.id !== undefined);
+
+  for (let prop of properties) {
+    const row = document.createElement(`vscode-table-row`);
+
+    row.appendChild(createLabelCell(prop.label));
+
+    if (prop.id) {
+      row.append(createInputCell(prop.id, prop.value, `no value`));
+    } else {
+      row.append(createLabelCell(prop.value));
+    }
+
+    tableBody.appendChild(row);
+  }
+
+  table.appendChild(tableBody);
+  section.appendChild(table);
+
+  if (hasEditableData) {
+    const updateButton = document.createElement(`vscode-button`);
+    updateButton.innerText = `Update`;
+
+    // Center the button
+    updateButton.style.margin = `1em`;
+    updateButton.style.display = `block`;
+
+    updateButton.addEventListener(`click`, (e) => {
+      const values = section.querySelectorAll(`[contenteditable]`);
+
+      /** @type {{[key: string]: string}} */
+      let newProperties = {};
+
+      values.forEach(field => {
+        newProperties[field.id] = field.innerText;
+      });
+
+      onUpdate(newProperties);
+    });
+
+    section.appendChild(updateButton);
+  }
 
   return section;
 }

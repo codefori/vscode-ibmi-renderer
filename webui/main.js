@@ -999,7 +999,7 @@ function createKeywordPanel(id, inputKeywords, onUpdate) {
   const tree = document.createElement(`vscode-tree`);
   tree.id = id;
 
-  const actions = [
+  const actions = onUpdate ? [
     {
       icon: "edit",
       actionId: "edit",
@@ -1010,7 +1010,7 @@ function createKeywordPanel(id, inputKeywords, onUpdate) {
       actionId: "delete",
       tooltip: "Delete",
     },
-  ];
+  ] : [];
 
   const icons = {
     branch: 'folder',
@@ -1060,7 +1060,6 @@ function createKeywordPanel(id, inputKeywords, onUpdate) {
   section.appendChild(tree);
 
   if (onUpdate) {
-
     const newKeyword = document.createElement(`vscode-button`);
     newKeyword.setAttribute(`icon`, `add`);
   
@@ -1069,7 +1068,7 @@ function createKeywordPanel(id, inputKeywords, onUpdate) {
     newKeyword.style.display = `block`;
     // TODO: event listener
     const updateButton = document.createElement(`vscode-button`);
-    updateButton.innerText = `Update`;
+    updateButton.innerText = `Change keyword`;
     
     // Center the button
     updateButton.style.margin = `1em`;

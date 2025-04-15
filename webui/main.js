@@ -23,6 +23,8 @@ const colours = {
   BLK: `black`,
 };
 
+const SELECTED_COLOUR = `#383838`;
+
 const dateFormats = {
   '*MDY': `mm/dd/yyyy`,
   '*DMY': `dd/mm/yyyy`,
@@ -745,7 +747,7 @@ function setActiveField(konvaElement, fieldInfo) {
     lastActiveKonvaElement = konvaElement;
 
     const bg = lastActiveKonvaElement.findOne(`#bg`);
-    bg.fill(colours.BLU);
+    bg.fill(SELECTED_COLOUR);
 
     updateSelectedFieldSidebar(fieldInfo);
   } else {
@@ -1039,22 +1041,31 @@ function createKeywordPanel(id, inputKeywords, onUpdate) {
 
   tree.addEventListener('vsc-run-action', (event) => {
     console.log(event.detail);
-    // TODO: check event.action for `delete` and `edit`
-    // TODO: show UI here and update event.value with changes value
-
     /** @type {Keyword} */
     const currentKeyword = event.detail.value;
-    editKeyword(event.detail.value, (newKeyword) => {
-      const oldKeywordIndex = keywords.findIndex(k => k.name === currentKeyword.name && k.value === currentKeyword.value)
-      if (oldKeywordIndex >= 0) {
-        keywords[oldKeywordIndex] = newKeyword;
-      } else {
-        keywords.push(newKeyword);
-      }
+    const oldKeywordIndex = keywords.findIndex(k => k.name === currentKeyword.name && k.value === currentKeyword.value);
 
-      clearKeywordEditor();
-      rerenderTree();
-    });
+    switch (event.detail.actionId) {
+      case `delete`:
+        if (oldKeywordIndex >= 0) {
+          keywords.splice(oldKeywordIndex, 1);
+        }
+        rerenderTree();
+        break;
+
+      case `edit`:
+        editKeyword((newKeyword) => {
+          if (oldKeywordIndex >= 0) {
+            keywords[oldKeywordIndex] = newKeyword;
+          } else {
+            keywords.push(newKeyword);
+          }
+
+          clearKeywordEditor();
+          rerenderTree();
+        }, event.detail.value);
+        break;
+    }
   });
 
   section.appendChild(tree);
@@ -1066,9 +1077,17 @@ function createKeywordPanel(id, inputKeywords, onUpdate) {
     newKeyword.innerText = `New Keyword`;
     newKeyword.style.margin = `1em`;
     newKeyword.style.display = `block`;
-    // TODO: event listener
+    
+    newKeyword.addEventListener(`click`, (e) => {
+      editKeyword((newKeyword) => {
+        keywords.push(newKeyword);
+        clearKeywordEditor();
+        rerenderTree();
+      });
+    });
+
     const updateButton = document.createElement(`vscode-button`);
-    updateButton.innerText = `Change keyword`;
+    updateButton.innerText = `Update`;
     
     // Center the button
     updateButton.style.margin = `1em`;
@@ -1173,10 +1192,10 @@ function clearKeywordEditor() {
 }
 
 /**
- * @param {Keyword} keyword 
  * @param {(keyword: Keyword) => void} onUpdate
+ * @param {Keyword} [keyword] 
  */
-function editKeyword(keyword, onUpdate) {
+function editKeyword(onUpdate, keyword) {
   const group = document.createElement(`vscode-form-group`);
   group.id = `currentKeywordEditor`;
   group.setAttribute(`variant`, `vertical`);
@@ -1205,7 +1224,7 @@ function editKeyword(keyword, onUpdate) {
     const options = [`None`];
 
     for (let i = 1; i <= 99; i++) {
-      options.push(i);
+      options.push(String(i));
     }
 
     options.forEach(option => {
@@ -1234,31 +1253,31 @@ function editKeyword(keyword, onUpdate) {
   };
 
   group.appendChild(createLabel(`Keyword`, `keyword`));
-  group.appendChild(createInputField(`keyword`, keyword.name));
+  group.appendChild(createInputField(`keyword`, keyword ? keyword.name : ``));
 
   group.appendChild(createLabel(`Value`, `value`));
-  group.appendChild(createInputField(`value`, keyword.value || ``));
+  group.appendChild(createInputField(`value`, keyword ? (keyword.value || ``) : ``));
 
   group.appendChild(createLabel(`Indicator 1`, `ind1`));
-  group.appendChild(createIndicatorSelect(`ind1`, keyword.conditions[0]?.indicator));
+  group.appendChild(createIndicatorSelect(`ind1`, keyword ? keyword.conditions[0]?.indicator : undefined));
 
-  group.appendChild(createCheckbox(`neg1`, `Negate`, keyword.conditions[0]?.negate));
+  group.appendChild(createCheckbox(`neg1`, `Negate`, keyword ? keyword.conditions[0]?.negate : undefined));
 
   group.appendChild(createLabel(`Indicator 2`, `ind2`));
-  group.appendChild(createIndicatorSelect(`ind2`, keyword.conditions[1]?.indicator));
+  group.appendChild(createIndicatorSelect(`ind2`, keyword ? keyword.conditions[1]?.indicator : undefined));
 
-  group.appendChild(createCheckbox(`neg2`, `Negate`, keyword.conditions[1]?.negate));
+  group.appendChild(createCheckbox(`neg2`, `Negate`, keyword ? keyword.conditions[1]?.negate : undefined));
 
   group.appendChild(createLabel(`Indicator 3`, `ind3`));
-  group.appendChild(createIndicatorSelect(`ind3`, keyword.conditions[2]?.indicator));
+  group.appendChild(createIndicatorSelect(`ind3`, keyword ? keyword.conditions[2]?.indicator : undefined));
 
-  group.appendChild(createCheckbox(`neg3`, `Negate`, keyword.conditions[2]?.negate));
+  group.appendChild(createCheckbox(`neg3`, `Negate`, keyword ? keyword.conditions[2]?.negate : undefined));
 
   const button = document.createElement(`vscode-button`);
   button.setAttribute(`icon`, `check`);
   button.style.marginTop = `1em`;
   button.style.display = `block`;
-  button.innerText = `Save`;
+  button.innerText = `Confirm`;
   button.onclick = () => {
     const keywordName = group.querySelector(`#keyword`).value;
     const keywordValue = group.querySelector(`#value`).value;

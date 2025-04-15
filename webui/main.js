@@ -1040,7 +1040,7 @@ function createKeywordPanel(id, keywords, onUpdate) {
 
   const icons = {
     branch: 'folder',
-    leaf: 'file',
+    leaf: 'circle-filled',
     open: 'folder-opened',
   };
 
@@ -1048,7 +1048,7 @@ function createKeywordPanel(id, keywords, onUpdate) {
     return {
       icons,
       label: keyword.name,
-      value: keyword.value,
+      value: keyword,
       description: keyword.value,
       actions,
       subItems: keyword.conditions.map(c => ({
@@ -1057,6 +1057,11 @@ function createKeywordPanel(id, keywords, onUpdate) {
         icons
       })),
     };
+  });
+
+  tree.addEventListener('vsc-run-action', (event) => {
+    console.log(event.detail);
+    // TODO: show UI here and update event.value with changes value
   });
 
   section.appendChild(tree);
@@ -1084,19 +1089,7 @@ function createKeywordPanel(id, keywords, onUpdate) {
       /** @type {Keyword[]} */
       let newKeywords = [];
 
-      rows.forEach(row => {
-        // TODO: how to handle conditions? D:
-        const keywordCell = row.querySelector(`[id^='c-'][id$='-keyword']`);
-        const valueCell = row.querySelector(`[id^='c-'][id$='-value']`);
-
-        if (keywordCell && valueCell) {
-          newKeywords.push({
-            name: keywordCell.innerText,
-            value: valueCell.innerText,
-            conditions: []
-          });
-        }
-      });
+      // Update newKeywors based on tree.data
 
       onUpdate(newKeywords);
     });

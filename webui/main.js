@@ -1038,19 +1038,23 @@ function createKeywordPanel(id, keywords, onUpdate) {
     },
   ];
 
+  const icons = {
+    branch: 'folder',
+    leaf: 'file',
+    open: 'folder-opened',
+  };
+
   tree.data = keywords.map((keyword, index) => {
     return {
-      icons: {
-        leaf: `account`,
-        open: `delete`,
-        branch: `edit`
-      },
+      icons,
       label: keyword.name,
       value: keyword.value,
       description: keyword.value,
       actions,
       subItems: keyword.conditions.map(c => ({
-        label: `${c.indicator} ${c.negate ? `(negated)` : ``}`,
+        label: String(c.indicator),
+        description: c.negate ? `Negated` : undefined,
+        icons
       })),
     };
   });

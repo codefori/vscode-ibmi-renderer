@@ -58,7 +58,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@vscode-elements/elements": "^1.13.1",
+    "@vscode-elements/elements": "^1.15.0",
     "@vscode/codicons": "^0.0.36",
     "konva": "^9.3.20"
   }

@@ -1028,8 +1028,8 @@ function createKeywordPanel(id, keywords, onUpdate) {
   const actions = [
     {
       icon: "edit",
-      actionId: "rename",
-      tooltip: "Rename",
+      actionId: "edit",
+      tooltip: "Edit",
     },
     {
       icon: "trash",
@@ -1061,6 +1061,7 @@ function createKeywordPanel(id, keywords, onUpdate) {
 
   tree.addEventListener('vsc-run-action', (event) => {
     console.log(event.detail);
+    // TODO: check event.action for `delete` and `edit`
     // TODO: show UI here and update event.value with changes value
   });
 

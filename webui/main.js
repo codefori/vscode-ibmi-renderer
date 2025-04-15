@@ -728,6 +728,8 @@ let lastActiveKonvaElement;
  * @param {FieldInfo} [fieldInfo] 
  */
 function setActiveField(konvaElement, fieldInfo) {
+  clearKeywordEditor();
+
   if (lastActiveKonvaElement) {
     const bg = lastActiveKonvaElement.findOne(`#bg`);
     // Remove background from last active element
@@ -984,43 +986,15 @@ function sendFieldUpdate(recordFormat, originalFieldName, newFieldInfo) {
 /**
  * Used to create panels for editable key/value lists.
  * @param {string} id
- * @param {Keyword[]} keywords 
+ * @param {Keyword[]} inputKeywords 
  * @param {(keywords: Keyword[]) => void} [onUpdate]
  */
-function createKeywordPanel(id, keywords, onUpdate) {
+function createKeywordPanel(id, inputKeywords, onUpdate) {
+  /** @type {Keyword[]} */
+  const keywords = JSON.parse(JSON.stringify(inputKeywords));
+
   const section = document.createElement(`div`);
   section.id = id;
-
-  const createInputCell = (id, value, readonly) => {
-    const cell = document.createElement(`vscode-table-cell`);
-
-    if (readonly) {
-      cell.innerText = value;
-
-    } else {
-      const input = document.createElement(`code`);
-      input.id = id;
-      input.innerText = value;
-
-      input.setAttribute(`contenteditable`, `true`);
-
-      cell.appendChild(input);
-    }
-
-    return cell;
-  };
-
-  const createDeleteButtonCell = (onClick) => {
-    const cell = document.createElement(`vscode-table-cell`);
-
-    const button = document.createElement(`vscode-icon`);
-    button.setAttribute(`name`, `trash`);
-    button.onclick = onClick;
-
-    cell.appendChild(button);
-
-    return cell;
-  };
 
   const tree = document.createElement(`vscode-tree`);
   tree.id = id;
@@ -1044,25 +1018,43 @@ function createKeywordPanel(id, keywords, onUpdate) {
     open: 'folder-opened',
   };
 
-  tree.data = keywords.map((keyword, index) => {
-    return {
-      icons,
-      label: keyword.name,
-      value: keyword,
-      description: keyword.value,
-      actions,
-      subItems: keyword.conditions.map(c => ({
-        label: String(c.indicator),
-        description: c.negate ? `Negated` : undefined,
-        icons
-      })),
-    };
-  });
+  const rerenderTree = () => {
+    tree.data = keywords.map((keyword, index) => {
+      return {
+        icons,
+        label: keyword.name,
+        value: keyword,
+        description: keyword.value,
+        actions,
+        subItems: keyword.conditions.map(c => ({
+          label: String(c.indicator),
+          description: c.negate ? `Negated` : undefined,
+          icons
+        })),
+      };
+    });
+  };
+
+  rerenderTree();
 
   tree.addEventListener('vsc-run-action', (event) => {
     console.log(event.detail);
     // TODO: check event.action for `delete` and `edit`
     // TODO: show UI here and update event.value with changes value
+
+    /** @type {Keyword} */
+    const currentKeyword = event.detail.value;
+    editKeyword(event.detail.value, (newKeyword) => {
+      const oldKeywordIndex = keywords.findIndex(k => k.name === currentKeyword.name && k.value === currentKeyword.value)
+      if (oldKeywordIndex >= 0) {
+        keywords[oldKeywordIndex] = newKeyword;
+      } else {
+        keywords.push(newKeyword);
+      }
+
+      clearKeywordEditor();
+      rerenderTree();
+    });
   });
 
   section.appendChild(tree);
@@ -1084,15 +1076,8 @@ function createKeywordPanel(id, keywords, onUpdate) {
     updateButton.style.display = `block`;
 
     updateButton.addEventListener(`click`, (e) => {
-      const rows = section.querySelectorAll(`[id^='${ROW_PREFIX}']`);
-      console.log(rows);
-
-      /** @type {Keyword[]} */
-      let newKeywords = [];
-
-      // Update newKeywors based on tree.data
-
-      onUpdate(newKeywords);
+      // As we update keywords, the `keywords` variable is updated
+      onUpdate(keywords);
     });
 
     section.appendChild(newKeyword);
@@ -1181,4 +1166,148 @@ function createValuesPanel(id, properties, onUpdate) {
   }
 
   return section;
+}
+
+function clearKeywordEditor() {
+  const keywordEditorArea = document.getElementById(`keywordEditorArea`);
+  keywordEditorArea.innerHTML = ``;
+}
+
+/**
+ * @param {Keyword} keyword 
+ * @param {(keyword: Keyword) => void} onUpdate
+ */
+function editKeyword(keyword, onUpdate) {
+  const group = document.createElement(`vscode-form-group`);
+  group.id = `currentKeywordEditor`;
+  group.setAttribute(`variant`, `vertical`);
+  group.style.paddingLeft = `1em`;
+  group.style.paddingRight = `1em`;
+
+  const createLabel = (label, forId) => {
+    const labelElement = document.createElement(`vscode-label`);
+    labelElement.setAttribute(`for`, forId);
+    labelElement.innerText = label;
+    labelElement.style.marginTop = `0.5em`;
+    return labelElement;
+  };
+
+  const createInputField = (id, value) => {
+    const input = document.createElement(`vscode-textfield`);
+    input.setAttribute(`id`, id);
+    input.setAttribute(`value`, value);
+    return input;
+  };
+
+  const createIndicatorSelect = (id, defaultValue) => {
+    const select = document.createElement(`vscode-single-select`);
+    select.setAttribute(`id`, id);
+
+    const options = [`None`];
+
+    for (let i = 1; i <= 99; i++) {
+      options.push(i);
+    }
+
+    options.forEach(option => {
+      const optionElement = document.createElement(`vscode-option`);
+      optionElement.setAttribute(`value`, option);
+      optionElement.innerText = option;
+
+      if (option === defaultValue) {
+        optionElement.setAttribute(`selected`, `true`);
+      }
+
+      select.appendChild(optionElement);
+    });
+
+    return select;
+  };
+
+  const createCheckbox = (id, label, checked) => {
+    const checkbox = document.createElement(`vscode-checkbox`);
+    checkbox.setAttribute(`id`, id);
+    checkbox.setAttribute(`label`, label);
+    if (checked) {
+      checkbox.setAttribute(`checked`, checked);
+    }
+    return checkbox;
+  };
+
+  group.appendChild(createLabel(`Keyword`, `keyword`));
+  group.appendChild(createInputField(`keyword`, keyword.name));
+
+  group.appendChild(createLabel(`Value`, `value`));
+  group.appendChild(createInputField(`value`, keyword.value || ``));
+
+  group.appendChild(createLabel(`Indicator 1`, `ind1`));
+  group.appendChild(createIndicatorSelect(`ind1`, keyword.conditions[0]?.indicator));
+
+  group.appendChild(createCheckbox(`neg1`, `Negate`, keyword.conditions[0]?.negate));
+
+  group.appendChild(createLabel(`Indicator 2`, `ind2`));
+  group.appendChild(createIndicatorSelect(`ind2`, keyword.conditions[1]?.indicator));
+
+  group.appendChild(createCheckbox(`neg2`, `Negate`, keyword.conditions[1]?.negate));
+
+  group.appendChild(createLabel(`Indicator 3`, `ind3`));
+  group.appendChild(createIndicatorSelect(`ind3`, keyword.conditions[2]?.indicator));
+
+  group.appendChild(createCheckbox(`neg3`, `Negate`, keyword.conditions[2]?.negate));
+
+  const button = document.createElement(`vscode-button`);
+  button.setAttribute(`icon`, `check`);
+  button.style.marginTop = `1em`;
+  button.style.display = `block`;
+  button.innerText = `Save`;
+  button.onclick = () => {
+    const keywordName = group.querySelector(`#keyword`).value;
+    const keywordValue = group.querySelector(`#value`).value;
+
+    const ind1 = group.querySelector(`#ind1`).value;
+    const neg1 = group.querySelector(`#neg1`).checked;
+
+    const ind2 = group.querySelector(`#ind2`).value;
+    const neg2 = group.querySelector(`#neg2`).checked;
+
+    const ind3 = group.querySelector(`#ind3`).value;
+    const neg3 = group.querySelector(`#neg3`).checked;
+
+    const newKeyword = {
+      name: keywordName,
+      value: keywordValue ? keywordValue : undefined,
+      conditions: []
+    };
+
+    if (ind1 !== `None`) {
+      newKeyword.conditions.push({
+        indicator: ind1,
+        negate: neg1
+      });
+    }
+
+    if (ind2 !== `None`) {
+      newKeyword.conditions.push({
+        indicator: ind2,
+        negate: neg2
+      });
+    }
+
+    if (ind3 !== `None`) {
+      newKeyword.conditions.push({
+        indicator: ind3,
+        negate: neg3
+      });
+    }
+
+    onUpdate(newKeyword);
+  };
+
+  group.appendChild(button);
+
+  const keywordEditorArea = document.getElementById(`keywordEditorArea`);
+  keywordEditorArea.innerHTML = ``;
+
+  keywordEditorArea.appendChild(document.createElement(`vscode-divider`));
+  keywordEditorArea.appendChild(group);
 }

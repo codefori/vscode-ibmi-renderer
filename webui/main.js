@@ -838,7 +838,7 @@ function clearFieldInfo() {
 function updateSelectedFieldSidebar(fieldInfo) {
   const sidebar = document.getElementById(`fieldInfoSidebar`);
 
-  /** @type {{title: string, html: string, open?: boolean}[]} */
+  /** @type {{title: string, html: string|Element, open?: boolean}[]} */
   let sections = [];
 
   /** @type {{name: string, value: string, editableId?: string}[]} */
@@ -872,82 +872,40 @@ function updateSelectedFieldSidebar(fieldInfo) {
     return `<vscode-table-row><vscode-table-cell>${property.name}</vscode-table-cell><vscode-table-cell ${property.editableId ? `id="field-${property.editableId}" contenteditable="true"` : ``}>${property.value}</vscode-table-cell></vscode-table-row>`;
   }).join(``);
 
-  const keywordRows = fieldInfo.keywords.map(keyword => {
-    return `<vscode-table-row><vscode-table-cell>${keyword.name}</vscode-table-cell><vscode-table-cell>${keyword.value ? `<code id="field-keyword-${keyword.name}" contenteditable="true">${keyword.value}</code>` : ``}</vscode-table-cell></vscode-table-row>`;
-  }).join(``);
-
   sections.push(
     {
       title: `Properties`,
+      // TODO: swap this to createKeywordPanel
       html: `<vscode-table><vscode-table-body slot="body">${propertyRows}</vscode-table-body></vscode-table>`,
       open: true
     },
     {
       title: `Keywords`,
-      html: `<vscode-table><vscode-table-body slot="body">${keywordRows}</vscode-table-body></vscode-table>`,
+      html: createKeywordPanel(`keywords-${fieldInfo.name}`, fieldInfo.keywords, (keywords) => {
+        fieldInfo.keywords = keywords;
+        sendFieldUpdate(lastSelectedFormat, fieldInfo.name, fieldInfo);
+      }),
       open: true
     }
   );
 
-  sidebar.innerHTML = sections.map(section => {
-    return `<vscode-collapsible title="${section.title}" ${section.open ? `open` : ``}>${section.html}</vscode-collapsible>`;
-  }).join(``);
+  sidebar.innerHTML = ``;
 
-  // create button
-  const updateButton = document.createElement(`vscode-button`);
-  updateButton.fieldInfo = JSON.parse(JSON.stringify(fieldInfo));
-  updateButton.innerText = `Update`;
-  
-  // Center the button
-  updateButton.style.margin = `1em`;
-  updateButton.style.display = `block`;
-
-  updateButton.addEventListener(`click`, (e) => {
-    /** @type {FieldInfo} */
-    const previousField = e.target.fieldInfo;
-
-    const fields = sidebar.querySelectorAll(`[contenteditable]`);
-
-    /** @type {{[key: string]: string, keywords: Keyword[]}}} */
-    const newDetail = {mainProps: {}, keywords: []};
-
-    // First let's grab all the fields from the UI
-
-    fields.forEach(field => {
-      const id = field.id;
-      const value = field.innerText;
-
-      if (id.startsWith(`field-keyword-`)) {
-        const prop = id.substring(`field-keyword-`.length);
-        
-        newDetail.keywords.push({
-          name: prop,
-          value: value,
-          conditions: [] // TODO, pick up old conditions
-        });
-
-      } else if (id.startsWith(`field-`)) {
-        const keyword = id.substring(`field-`.length);
-        newDetail.mainProps[keyword] = value;
-      }
-    });
-
-    // Then update and send the changes to the backend
-
-    const originalName = previousField.name;
-
-    for (const valueKey in newDetail.mainProps) {
-      const value = newDetail.mainProps[valueKey];
-
-      previousField[valueKey] = value;
+  for (let section of sections) {
+    let newSection = document.createElement(`vscode-collapsible`);
+    newSection.setAttribute(`title`, section.title);
+    if (section.open) {
+      newSection.setAttribute(`open`, ``);
     }
 
-    previousField.keywords = newDetail.keywords;
+    if (typeof section.html === `string`) {
+      newSection.innerHTML = section.html;
+    } else {
+      newSection.appendChild(section.html);
+    }
 
-    sendFieldUpdate(lastSelectedFormat, originalName, previousField);
-  });
-  
-  sidebar.appendChild(updateButton);
+    sidebar.appendChild(newSection);
+  }
 
   const deleteButton = document.createElement(`vscode-button`);
   deleteButton.setAttribute(`secondary`, `true`);
@@ -1014,4 +972,109 @@ function sendFieldUpdate(recordFormat, originalFieldName, newFieldInfo) {
   if (newGroup) {
     setActiveField(newGroup, newFieldInfo);
   }
+}
+
+/**
+ * @param {string} id
+ * @param {Keyword[]} keywords 
+ * @param {(keywords: Keyword[]) => void} onUpdate
+ */
+function createKeywordPanel(id, keywords, onUpdate) {
+  const section = document.createElement(`div`);
+  section.id = id;
+
+  const createInputCell = (id, value, placeHolder) => {
+    const cell = document.createElement(`vscode-table-cell`);
+
+    const input = document.createElement(`code`);
+    input.id = id;
+    input.innerText = value;
+
+    input.setAttribute(`contenteditable`, `true`);
+
+    cell.appendChild(input);
+
+    return cell;
+  };
+
+  const createDeleteButtonCell = (onClick) => {
+    const cell = document.createElement(`vscode-table-cell`);
+
+    const button = document.createElement(`vscode-button`);
+    button.setAttribute(`icon`, `trash`);
+    button.setAttribute(`secondary`, `true`);
+    cell.appendChild(button);
+
+    button.onclick = onClick;
+
+    return cell;
+  };
+
+  const table = document.createElement(`vscode-table`);
+  table.id = id;
+
+  const tableBody = document.createElement(`vscode-table-body`);
+  tableBody.setAttribute(`slot`, `body`);
+
+  const ROW_PREFIX = `c-row-`;
+  for (let i = 0; i < keywords.length; i++) {
+    const keyword = keywords[i];
+    const row = document.createElement(`vscode-table-row`);
+    row.id = `${ROW_PREFIX}${i}`;
+
+    // TODO: delete button? on the keyword?
+    const deleteKeywordButton = createDeleteButtonCell(() => {
+      row.remove();
+    });
+
+    const keywordCell = createInputCell(`c-${i}-keyword`, keyword.name, `Keyword`);
+    const valueCell = createInputCell(`c-${i}-value`, keyword.value || ``, `no value`);
+    // TODO: Consider how conditions should be handled?
+
+    row.appendChild(deleteKeywordButton);
+    row.appendChild(keywordCell);
+    row.appendChild(valueCell);
+
+    tableBody.appendChild(row);
+  }
+
+  table.appendChild(tableBody);
+
+  // TODO: add a button to add a new row
+
+  const updateButton = document.createElement(`vscode-button`);
+  updateButton.innerText = `Update`;
+  
+  // Center the button
+  updateButton.style.margin = `1em`;
+  updateButton.style.display = `block`;
+
+  updateButton.addEventListener(`click`, (e) => {
+    const rows = section.querySelectorAll(`[id^='${ROW_PREFIX}']`);
+    console.log(rows);
+
+    /** @type {Keyword[]} */
+    let newKeywords = [];
+
+    rows.forEach(row => {
+      // TODO: how to handle conditions? D:
+      const keywordCell = row.querySelector(`[id^='c-'][id$='-keyword']`);
+      const valueCell = row.querySelector(`[id^='c-'][id$='-value']`);
+
+      if (keywordCell && valueCell) {
+        newKeywords.push({
+          name: keywordCell.innerText,
+          value: valueCell.innerText,
+          conditions: []
+        });
+      }
+    });
+
+    onUpdate(newKeywords);
+  });
+
+  section.appendChild(table);
+  section.appendChild(updateButton);
+
+  return section;
 }

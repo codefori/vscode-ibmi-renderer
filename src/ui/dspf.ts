@@ -163,9 +163,8 @@ export class DisplayFile {
               this.currentField.conditions.push(
                 ...DisplayFile.parseConditionals(conditionals)
               );
-
-              this.HandleKeywords(keywords, conditionals);
             }
+            this.HandleKeywords(keywords, conditionals);
           }
           else {
             if (this.currentField) {
@@ -218,7 +217,8 @@ export class DisplayFile {
       insertIndex = this.currentField.keywordStrings.keywordLines.push(keywords);
       this.currentField.keywordStrings.conditionalLines[insertIndex] = conditionals;
     } else if (this.currentRecord) {
-      this.currentRecord.keywordStrings.push(keywords);
+      insertIndex = this.currentRecord.keywordStrings.keywordLines.push(keywords);
+      this.currentRecord.keywordStrings.conditionalLines[insertIndex] = conditionals;
     }
 
 
@@ -246,7 +246,7 @@ export class DisplayFile {
         negate = (conditionColumns.substring(cIndex, cIndex + 1) === "N");
         indicator = Number(conditionColumns.substring(cIndex + 1, cIndex + 3));
 
-        conditionals.push(new Conditional(indicator, negate));
+        conditionals.push({indicator, negate});
       }
 
       cIndex += 3;
@@ -439,13 +439,13 @@ export class RecordInfo {
   public isWindow: boolean = false;
   public windowReference: string | undefined = undefined;
   public windowSize: { y: number, x: number, width: number, height: number } = { y: 0, x: 0, width: 80, height: 24 };
-  public keywordStrings: string[] = [];
+  public keywordStrings: { keywordLines: string[], conditionalLines: { [lineIndex: number]: string } } = { keywordLines: [], conditionalLines: {} };
   public keywords: Keyword[] = [];
 
   constructor(public name: string) { }
 
   handleKeywords() {
-    const data = DisplayFile.parseKeywords(this.keywordStrings);
+    const data = DisplayFile.parseKeywords(this.keywordStrings.keywordLines, this.keywordStrings.conditionalLines);
 
     this.keywords.push(...data.keywords);
 
@@ -532,6 +532,7 @@ export class FieldInfo {
   }
 }
 
-export class Conditional {
-  constructor(public indicator: number, public negate = false) { }
+export interface Conditional {
+  indicator: number,
+  negate: boolean  
 }

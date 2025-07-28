@@ -42,10 +42,9 @@
     "package": "npm run check-types && npm run lint && node esbuild.js --production",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vitest"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.97.0",
     "@typescript-eslint/eslint-plugin": "^8.22.0",
@@ -60,6 +59,7 @@
   "dependencies": {
     "@vscode-elements/elements": "^1.15.0",
     "@vscode/codicons": "^0.0.36",
-    "konva": "^9.3.20"
+    "konva": "^9.3.20",
+    "vitest": "^3.2.0"
   }
 }

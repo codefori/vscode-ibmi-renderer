@@ -456,7 +456,6 @@ export class DisplayFile {
     return lines;
   }
 
-  // TODO: test cases
   public getRangeForFormat(recordFormat: string): DdsLineRange|undefined {
     let range: DdsLineRange|undefined = undefined;
     const currentFormatI = this.formats.findIndex(format => format.name === recordFormat);

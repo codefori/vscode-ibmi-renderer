@@ -2,7 +2,7 @@
 export interface DdsLineRange { start: number, endHeader?: number, end: number };
 export interface DdsUpdate { newLines: string[], range?: DdsLineRange };
 
-const GLOBAL_RECORD_NAME = `GLOBAL`;
+const GLOBAL_RECORD_NAME = `_GLOBAL`;
 
 export class DisplayFile {
   public formats: RecordInfo[] = [];

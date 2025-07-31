@@ -1,11 +1,14 @@
 
-export interface DdsLineRange { start: number, end: number };
+export interface DdsLineRange { start: number, endHeader?: number, end: number };
+export interface DdsUpdate { newLines: string[], range?: DdsLineRange };
+
+const GLOBAL_RECORD_NAME = `GLOBAL`;
 
 export class DisplayFile {
   public formats: RecordInfo[] = [];
   public currentField: FieldInfo | undefined;
   public currentFields: FieldInfo[] = [];
-  public currentRecord: RecordInfo|undefined = new RecordInfo(`GLOBAL`);
+  public currentRecord: RecordInfo|undefined = new RecordInfo(GLOBAL_RECORD_NAME);
 
   constructor() { }
 
@@ -348,7 +351,8 @@ export class DisplayFile {
     return result;
   }
 
-  public getLinesForField(field: FieldInfo): string[] {
+  // TODO: test cases
+  public static getLinesForField(field: FieldInfo): string[] {
     const newLines: string[] = [];
 
     const FIELD_TYPE: { [name in DisplayType]: string } = {
@@ -387,6 +391,7 @@ export class DisplayFile {
     return newLines;
   }
 
+  // TODO: test cases
   public getRangeForField(recordFormat: string, fieldName: string): DdsLineRange|undefined {
     let range: DdsLineRange|undefined = undefined;
     const currentFormatI = this.formats.findIndex(format => format.name === recordFormat);
@@ -417,8 +422,9 @@ export class DisplayFile {
     return range;
   }
 
-  public updateField(recordFormat: string, originalFieldName: string|undefined, fieldInfo: FieldInfo): { newLines: string[], range?: DdsLineRange }|undefined {
-    const newLines = this.getLinesForField(fieldInfo);
+  // TODO: test cases
+  public updateField(recordFormat: string, originalFieldName: string|undefined, fieldInfo: FieldInfo): DdsUpdate|undefined {
+    const newLines = DisplayFile.getLinesForField(fieldInfo);
 
     let range = this.getRangeForField(recordFormat, originalFieldName!);
 
@@ -430,6 +436,62 @@ export class DisplayFile {
     }
 
     return { newLines, range };
+  }
+
+  // TODO: test cases
+  static getLinesForFormat(recordFormat: RecordInfo): string[] {
+    const lines: string[] = [];
+
+    if (recordFormat.name !== GLOBAL_RECORD_NAME) {
+      lines.push(`     A          R ${recordFormat.name}`);
+    }
+
+    for (const keyword of recordFormat.keywords) {
+      // TODO: support conditions
+      lines.push(
+        `     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`,
+      );
+    }
+
+    return lines;
+  }
+
+  // TODO: test cases
+  public getRangeForFormat(recordFormat: string): DdsLineRange|undefined {
+    let range: DdsLineRange|undefined = undefined;
+    const currentFormatI = this.formats.findIndex(format => format.name === recordFormat);
+    if (currentFormatI > 0) {
+      range = { start: this.formats[currentFormatI].range.start, end: this.formats[currentFormatI].range.end };
+
+      const currentFormat = this.formats[currentFormatI];
+      const firstField = currentFormat.fields[0];
+
+      if (firstField) {
+        range.endHeader = firstField.startRange-1;
+      } else {
+        range.endHeader = range.start;
+      }
+    }
+
+    return range;
+  }
+
+  // TODO: test cases
+  public updateFormat(originalFormatName: string, newRecordFormat: RecordInfo): DdsUpdate|undefined {
+    const newLines = DisplayFile.getLinesForFormat(newRecordFormat);
+    let range = this.getRangeForFormat(originalFormatName);
+
+    if (range) {
+      range = {
+        start: range.start,
+        end: range.endHeader || range.end,
+      };
+    }
+
+    return {
+      newLines,
+      range
+    };
   }
 }
 

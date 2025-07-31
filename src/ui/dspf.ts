@@ -509,7 +509,7 @@ export type DisplayType = "input" | "output" | "both" | "const" | "hidden";
 
 export class FieldInfo {
   public value: string | undefined;
-  public type: string | undefined
+  public type: string | undefined;
   public primitiveType: "char" | "decimal" | undefined;
   public displayType: DisplayType | undefined;
   public length: number = 0;

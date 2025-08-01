@@ -12,7 +12,10 @@ describe('DisplayFile tests', () => {
     `     A                                  1  3'Opt'                               `,
     `     A                                      COLOR(BLU)                          `,
     `     A                                  1  8'Name'                              `,
-    `     A                                      COLOR(BLU)                          `
+    `     A                                      COLOR(BLU)                          `,
+    `     A          R GLOBAL                                                        `,     
+    `     A                                      SLNO(04)                            `,
+    `     A                                  1  3'---'                               `,
   ];
 
   it('getRangeForFormat', () => {
@@ -26,12 +29,17 @@ describe('DisplayFile tests', () => {
     range = dds.getRangeForFormat(`FMT1`);
     expect(range?.start).toBe(3);
     expect(range?.end).toBe(9);
-    expect(true).toBe(true);
 
     range = dds.getRangeForFormat(`HEAD`);
     expect(range?.start).toBe(1);
     expect(range?.end).toBe(3);
-    expect(true).toBe(true);
+  });
+
+  it('No duplicate RecordInfo', () => {
+    let dds = new DisplayFile();
+    dds.parse(dspf1);
+    let names = dds.formats.map(rcd => rcd.name);
+    expect(new Set(names).size).toBe(names.length);
   });
 
 });

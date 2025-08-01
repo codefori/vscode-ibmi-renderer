@@ -16,6 +16,12 @@ describe('DisplayFile tests', () => {
     `     A          R GLOBAL                                                        `,     
     `     A                                      SLNO(04)                            `,
     `     A                                  1  3'---'                               `,
+    `     A          R FORM1                                                         `,     
+    `     A                                      SLNO(06)                            `,
+    `     A            FLD0101       10A  B  3  5                                    `,
+    `     A  20                                  DSPATR(PR)                          `,
+    `     A                                      COLOR(YLW)                          `,
+    `     A            FLD0102       10   B  3  5                                    `,
   ];
 
   it('getRangeForFormat', () => {
@@ -33,6 +39,24 @@ describe('DisplayFile tests', () => {
     range = dds.getRangeForFormat(`HEAD`);
     expect(range?.start).toBe(1);
     expect(range?.end).toBe(3);
+  });
+
+  it('getRangeForField', () => {
+    let dds = new DisplayFile();
+    dds.parse(dspf1);
+
+    let range: DdsLineRange | undefined;
+
+    expect(dds.getRangeForField(`FORM1`, `UNKNOWN`)).toBeUndefined();
+
+    range = dds.getRangeForField(`FORM1`, `FLD0101`);
+    expect(range?.start).toBe(14);
+    expect(range?.end).toBe(16);
+
+    range = dds.getRangeForField(`FORM1`, `FLD0102`);
+    expect(range?.start).toBe(17);
+    expect(range?.end).toBe(17);
+
   });
 
   it('No duplicate RecordInfo', () => {

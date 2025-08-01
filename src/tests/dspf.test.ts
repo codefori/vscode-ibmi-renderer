@@ -1,5 +1,5 @@
 import { expect, describe, it } from "vitest";
-import { DdsLineRange, DisplayFile } from "../ui/dspf";
+import { DdsLineRange, DisplayFile, FieldInfo } from "../ui/dspf";
 
 describe('DisplayFile tests', () => {
 
@@ -56,6 +56,43 @@ describe('DisplayFile tests', () => {
     range = dds.getRangeForField(`FORM1`, `FLD0102`);
     expect(range?.start).toBe(17);
     expect(range?.end).toBe(17);
+
+  });
+
+  it('getLinesForField', () => {
+
+    let dds = new DisplayFile();
+
+    let field = new FieldInfo(0);
+    field.displayType = `const`;
+    field.value = `Some text`;
+    field.position.x = 10;
+    field.position.y = 4;
+
+    let lines = DisplayFile.getLinesForField(field);
+
+    expect(lines.length).toBe(1);
+    expect(lines[0]).toBe(`     A                                  4 10'Some text'`);
+
+    field.keywords.push(
+      {
+      name: "COLOR(BLU)",
+      conditions: []
+      },
+      {
+        name: "DSPATR(PR)",
+        conditions: [{
+          indicator: 21,
+          negate: true
+        }]
+      }
+    );
+
+    lines = DisplayFile.getLinesForField(field);
+    expect(lines.length).toBe(3);
+    expect(lines[0]).toBe(`     A                                  4 10'Some text'`);
+    expect(lines[1]).toBe(`     A                                      COLOR(BLU)`);
+    expect(lines[2]).toBe(`     A N21                                  DSPATR(PR)`);
 
   });
 

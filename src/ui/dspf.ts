@@ -351,7 +351,6 @@ export class DisplayFile {
     return result;
   }
 
-  // TODO: test cases
   public static getLinesForField(field: FieldInfo): string[] {
     const newLines: string[] = [];
 
@@ -391,7 +390,6 @@ export class DisplayFile {
     return newLines;
   }
 
-  // TODO: test cases
   public getRangeForField(recordFormat: string, fieldName: string): DdsLineRange|undefined {
     let range: DdsLineRange|undefined = undefined;
     const currentFormatI = this.formats.findIndex(format => format.name === recordFormat);

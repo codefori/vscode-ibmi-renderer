@@ -76,15 +76,14 @@ describe('DisplayFile tests', () => {
 
     field.keywords.push(
       {
-      name: "COLOR(BLU)",
+      name: "COLOR",
+      value: "BLU",
       conditions: []
       },
       {
-        name: "DSPATR(PR)",
-        conditions: [{
-          indicator: 21,
-          negate: true
-        }]
+        name: "DSPATR",
+        value: "PR",
+        conditions: []
       }
     );
 
@@ -92,7 +91,7 @@ describe('DisplayFile tests', () => {
     expect(lines.length).toBe(3);
     expect(lines[0]).toBe(`     A                                  4 10'Some text'`);
     expect(lines[1]).toBe(`     A                                      COLOR(BLU)`);
-    expect(lines[2]).toBe(`     A N21                                  DSPATR(PR)`);
+    expect(lines[2]).toBe(`     A                                      DSPATR(PR)`);
 
   });
 

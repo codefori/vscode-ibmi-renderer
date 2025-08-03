@@ -1,5 +1,5 @@
 import { expect, describe, it } from "vitest";
-import { DdsLineRange, DisplayFile } from "../ui/dspf";
+import { Conditional, DdsLineRange, DisplayFile } from "../ui/dspf";
 
 describe('DisplayFile tests', () => {
 
@@ -40,6 +40,21 @@ describe('DisplayFile tests', () => {
     dds.parse(dspf1);
     let names = dds.formats.map(rcd => rcd.name);
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('Test for Conditional class', () => {
+
+    let cond = new Conditional();
+    cond.push(` N10 11N12`);
+
+    expect(cond.getConditions().length).toBe(1);
+    expect(cond.getConditions().at(0)?.indicators.length).toBe(3);
+
+    cond.push(`O 20 21`);
+
+    expect(cond.getConditions().length).toBe(2);
+    expect(cond.getConditions().at(1)?.indicators.length).toBe(2);
+
   });
 
 });

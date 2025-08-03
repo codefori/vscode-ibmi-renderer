@@ -146,7 +146,7 @@ export class DisplayFile {
                   this.currentField.keywords.push({
                     name: `DATE`,
                     value: undefined,
-                    conditions: []
+                    conditional: new Conditional()
                   });
                   break;
                 case `T`: //Time
@@ -155,7 +155,7 @@ export class DisplayFile {
                   this.currentField.keywords.push({
                     name: `TIME`,
                     value: undefined,
-                    conditions: []
+                    conditional: new Conditional()
                   });
                   break;
                 default:
@@ -163,9 +163,7 @@ export class DisplayFile {
                   break;
               }
 
-              this.currentField.conditions.push(
-                ...DisplayFile.parseConditionals(conditionals)
-              );
+              this.currentField.conditional.push(conditionals);
             }
             this.HandleKeywords(keywords, conditionals);
           }
@@ -178,9 +176,7 @@ export class DisplayFile {
                 this.currentField.length = this.currentField.value.length;
                 this.currentField.displayType = `const`;
 
-                this.currentField.conditions.push(
-                  ...DisplayFile.parseConditionals(conditionals)
-                );
+                this.currentField.conditional.push(conditionals);
               }
             }
             this.HandleKeywords(keywords, conditionals);
@@ -227,42 +223,11 @@ export class DisplayFile {
 
   }
 
-  static parseConditionals(conditionColumns: string): Conditional[] {
-    if (conditionColumns.trim() === "") {return [];}
-
-    /** @type {Conditional[]} */
-    let conditionals = [];
-
-    //TODO: something with condition
-    //const condition = conditionColumns.substring(0, 1); //A (and) or O (or)
-
-    let current = "";
-    let negate = false;
-    let indicator = 0;
-
-    let cIndex = 1;
-
-    while (cIndex <= 7) {
-      current = conditionColumns.substring(cIndex, cIndex + 3);
-
-      if (current.trim() !== "") {
-        negate = (conditionColumns.substring(cIndex, cIndex + 1) === "N");
-        indicator = Number(conditionColumns.substring(cIndex + 1, cIndex + 3));
-
-        conditionals.push({indicator, negate});
-      }
-
-      cIndex += 3;
-    }
-
-    return conditionals;
-  }
-
   static parseKeywords(keywordStrings: string[], conditionalStrings?: { [line: number]: string }) {
-    let result: { value: string, keywords: Keyword[], conditions: Conditional[] } = {
+    let result: { value: string, keywords: Keyword[], conditional: Conditional } = {
       value: ``,
       keywords: [],
-      conditions: []
+      conditional: new Conditional()
     };
 
     const newLineMark = `~`;
@@ -330,7 +295,7 @@ export class DisplayFile {
                 result.keywords.push({
                   name: word.toUpperCase(),
                   value: innerValue.length > 0 ? innerValue : undefined,
-                  conditions: conditionals ? DisplayFile.parseConditionals(conditionals) : []
+                  conditional: new Conditional(conditionals) 
                 });
 
                 word = ``;
@@ -564,7 +529,7 @@ export class RecordInfo {
   }
 }
 
-export interface Keyword { name: string, value?: string, conditions: Conditional[] };
+export interface Keyword { name: string, value?: string, conditional: Conditional };
 
 export type DisplayType = "input" | "output" | "both" | "const" | "hidden";
 
@@ -577,7 +542,7 @@ export class FieldInfo {
   public decimals: number = 0;
   public position: { x: number, y: number } = { x: 0, y: 0 };
   public keywordStrings: { keywordLines: string[], conditionalLines: { [lineIndex: number]: string } } = { keywordLines: [], conditionalLines: {} };
-  public conditions: Conditional[] = [];
+  public conditional: Conditional = new Conditional();
   public keywords: Keyword[] = [];
 
   constructor(public startRange: number, public name?: string) {}
@@ -593,7 +558,66 @@ export class FieldInfo {
   }
 }
 
-export interface Conditional {
-  indicator: number,
-  negate: boolean  
+export interface Condition {
+    indicators: Indicator[];
+}
+
+export interface Indicator {
+    indicator: number,
+    negate: boolean  
+}
+
+export class Conditional {
+    private conditions: Condition[] = [{
+        indicators: []
+    }];
+
+    constructor(indicatorStr?: string) {
+        if (indicatorStr !== undefined) {
+          this.push(indicatorStr);
+        }
+    }
+
+    push(indicatorStr: string) {
+        if (indicatorStr.substring(0, 1) === `O` && this.conditions[this.conditions.length - 1].indicators.length > 0) {
+            if (this.conditions.length >= 8) {
+                throw new Error("Too many conditions");
+            }
+            this.conditions.push({indicators: []});
+        }
+
+        let cIndex = 1;
+        let current = ``;
+        let negate = false;
+        let indicator = 0;
+
+        while (cIndex <= 7) {
+            current = indicatorStr.substring(cIndex, cIndex + 3);
+
+            if (current.trim() !== "") {
+                negate = (indicatorStr.substring(cIndex, cIndex + 1) === "N");
+                indicator = Number(indicatorStr.substring(cIndex + 1, cIndex + 3));
+                if (indicator !== 0) {
+                    if (this.conditions[this.conditions.length - 1].indicators.length >= 8) {
+                        throw new Error("Too many option indicators specified for one condition");
+                    }
+                    this.conditions[this.conditions.length - 1].indicators.push({
+                        indicator: indicator,
+                        negate: negate
+                    })
+                }
+            }
+
+        cIndex += 3;
+        }
+    }
+
+    getConditions(): Condition[] {
+        return this.conditions;
+    }
+
+    getLines(line: string): string[] {
+      return [];
+    }
+
 }

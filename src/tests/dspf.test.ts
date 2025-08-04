@@ -78,12 +78,12 @@ describe('DisplayFile tests', () => {
       {
       name: "COLOR",
       value: "BLU",
-      conditions: []
+      conditional: new Conditional()
       },
       {
         name: "DSPATR",
         value: "PR",
-        conditions: []
+        conditional: new Conditional(`  31`)
       }
     );
 
@@ -91,7 +91,7 @@ describe('DisplayFile tests', () => {
     expect(lines.length).toBe(3);
     expect(lines[0]).toBe(`     A                                  4 10'Some text'`);
     expect(lines[1]).toBe(`     A                                      COLOR(BLU)`);
-    expect(lines[2]).toBe(`     A                                      DSPATR(PR)`);
+    expect(lines[2]).toBe(`     A  31                                  DSPATR(PR)`);
 
   });
 

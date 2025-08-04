@@ -346,10 +346,7 @@ export class DisplayFile {
     }
 
     for (const keyword of field.keywords) {
-      // TODO: support conditions
-      newLines.push(
-        `     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`,
-      );
+      newLines.push(...keyword.conditional.getLinesWithCondition(`     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`));
     }
 
     return newLines;
@@ -614,8 +611,29 @@ export class Conditional {
         return this.conditions;
     }
 
-    getLines(line: string): string[] {
-      return [];
+    getLinesWithCondition(line: string): string[] {
+      if (this.conditions.length == 1 && this.conditions[0].indicators.length == 0) {
+        return [line];
+      }
+      let lines: string[] = [];
+      this.conditions.forEach((condition, cIdx) => {
+        let i = 0;
+        let line = ``;
+        condition.indicators.forEach(ind => {
+          if (i >= 3) {
+            lines.push(line.padEnd(16));
+            i = 0;
+          }
+          if (i == 0) {
+            line = `     A${cIdx > 0 ? "O" : " "}`;
+          }
+          i++;
+          line += `${ind.negate ? `N` : ` `}${String(ind.indicator).padStart(2, '0')}`;
+        });
+        lines.push(line.padEnd(16));
+      });
+      lines[lines.length - 1] = lines[lines.length - 1].substring(0, 16) + line.substring(16);
+      return lines;
     }
 
 }

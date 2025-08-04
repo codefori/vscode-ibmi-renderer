@@ -573,7 +573,7 @@ export class Conditional {
 
     push(indicatorStr: string) {
         if (indicatorStr.substring(0, 1) === `O` && this.conditions[this.conditions.length - 1].indicators.length > 0) {
-            if (this.conditions.length >= 8) {
+            if (this.conditions.length >= 9) {
                 throw new Error("Too many conditions");
             }
             this.conditions.push({indicators: []});
@@ -591,7 +591,7 @@ export class Conditional {
                 negate = (indicatorStr.substring(cIndex, cIndex + 1) === "N");
                 indicator = Number(indicatorStr.substring(cIndex + 1, cIndex + 3));
                 if (indicator !== 0) {
-                    if (this.conditions[this.conditions.length - 1].indicators.length >= 8) {
+                    if (this.conditions[this.conditions.length - 1].indicators.length >= 9) {
                         throw new Error("Too many option indicators specified for one condition");
                     }
                     this.conditions[this.conditions.length - 1].indicators.push({

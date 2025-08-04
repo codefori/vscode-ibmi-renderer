@@ -398,7 +398,6 @@ export class DisplayFile {
     return { newLines, range };
   }
 
-  // TODO: test cases
   static getLinesForFormat(recordFormat: RecordInfo): string[] {
     const lines: string[] = [];
 
@@ -407,10 +406,9 @@ export class DisplayFile {
     }
 
     for (const keyword of recordFormat.keywords) {
-      // TODO: support conditions
-      lines.push(
-        `     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`,
-      );
+      for (const keyword of recordFormat.keywords) {
+        lines.push(...keyword.conditional.getLinesWithCondition(`     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`));
+      }
     }
 
     return lines;

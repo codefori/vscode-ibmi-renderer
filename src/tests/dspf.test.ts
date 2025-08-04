@@ -22,6 +22,8 @@ describe('DisplayFile tests', () => {
     `     A  20                                  DSPATR(PR)                          `,
     `     A                                      COLOR(YLW)                          `,
     `     A            FLD0102       10   B  3  5                                    `,
+    `     A          R FORM2                                                         `,
+    `     A  30                                  SLNO(02)                            `,
   ];
 
   it('getRangeForFormat', () => {
@@ -93,6 +95,14 @@ describe('DisplayFile tests', () => {
     expect(lines[1]).toBe(`     A                                      COLOR(BLU)`);
     expect(lines[2]).toBe(`     A  31                                  DSPATR(PR)`);
 
+  });
+
+  it('getLinesForFormat', () => {
+    let dds = new DisplayFile();
+    dds.parse(dspf1);
+    let lines = DisplayFile.getLinesForFormat(dds.formats[5]);    
+    expect(lines.length).toBe(2);
+    expect(lines[1]).toBe(`     A  30                                  SLNO(02)`);
   });
 
   it('No duplicate RecordInfo', () => {

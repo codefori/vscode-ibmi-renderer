@@ -634,4 +634,46 @@ export class Conditional {
       return lines;
     }
 
+    isActive(indicators: DisplayFileIndicators): boolean {
+      if (this.conditions.length <= 1 && this.conditions[0].indicators.length == 0) {
+        return true;
+      }
+      this.conditions.forEach(cond => {
+        let condResult = true;
+        cond.indicators.forEach(ind => {
+          if ((!indicators.get(ind.indicator) && !ind.negate) || (indicators.get(ind.indicator) && ind.negate)) {
+            condResult = false;
+          }
+        });
+        if (condResult) {
+          return true;
+        }
+      });
+      return false;
+    }
+
+}
+
+
+export class DisplayFileIndicators {
+  private indicators: boolean[] = Array(99).fill(false);
+
+  set(indicator: number, state: boolean) {
+    if (indicator < 1 || indicator > 99) {
+      throw new Error(`Invalid indicator number`);
+    }
+    this.indicators[indicator - 1] = state;
+  }
+
+  setAll(state: boolean) {
+    this.indicators.forEach(ind => ind = state);
+  }
+
+  get(indicator: number) :boolean {
+    if (indicator < 1 || indicator > 99) {
+      throw new Error(`Invalid indicator number`);
+    }
+    return this.indicators[indicator - 1];
+  }
+
 }

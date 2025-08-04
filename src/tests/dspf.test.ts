@@ -1,5 +1,5 @@
 import { expect, describe, it } from "vitest";
-import {  Conditional, DdsLineRange, DisplayFile, FieldInfo } from "../ui/dspf";
+import {  Conditional, DdsLineRange, DisplayFile, DisplayFileIndicators, FieldInfo } from "../ui/dspf";
 
 describe('DisplayFile tests', () => {
 
@@ -124,6 +124,14 @@ describe('DisplayFile tests', () => {
 
     expect(cond.getConditions().length).toBe(2);
     expect(cond.getConditions().at(1)?.indicators.length).toBe(2);
+
+    let indicators = new DisplayFileIndicators();
+    indicators.set(11, true);
+    expect(cond.isActive(indicators)).toBeTruthy;
+    indicators.set(10, true);
+    expect(cond.isActive(indicators)).toBeFalsy;
+    indicators.set(20, true);
+    expect(cond.isActive(indicators)).toBeTruthy;
 
   });
 

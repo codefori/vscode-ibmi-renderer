@@ -3,6 +3,7 @@
  * @typedef {import('./dspf.d.ts').RecordInfo} RecordInfo
  * @typedef {import('./dspf.d.ts').FieldInfo} FieldInfo
  * @typedef {import('./dspf.d.ts').Keyword} Keyword
+ * @typedef {import('./dspf.d.ts').Conditional} Conditional
  * @typedef {import("konva").default.Rect} Rect
  * @typedef {import("konva").default.Stage} Stage
  * @typedef {import("konva").default.Group} Group
@@ -261,13 +262,13 @@ function renderSelectedFormat(layer, format) {
             windowTitle.keywords.push({
               name: `COLOR`,
               value: parts[index + 1],
-              conditions: []
+              conditional: new Conditional()
             });
           case `*DSPATR`:
             windowTitle.keywords.push({
               name: `DSPATR`,
               value: parts[index + 1],
-              conditions: []
+              conditional: new Conditional()
             });
             break;
 
@@ -289,7 +290,7 @@ function renderSelectedFormat(layer, format) {
           windowTitle.keywords.push({
             name: `COLOR`,
             value: `BLU`,
-            conditions: []
+            conditional: new Conditional()
           });
         }
 
@@ -409,12 +410,12 @@ function addFieldsToLayer(layer, format) {
   fields.forEach(field => {
     let canDisplay = true;
 
-    field.conditions.forEach(cond => {
-      // TODO: indicator support?
+    // TODO: indicator support?
+    //field.conditions.forEach(cond => {
       // if (this.indicators[cond.indicator] !== (cond.negate ? false : true)) {
       //   canDisplay = false;
       // }
-    });
+    //});
 
     if (canDisplay) {
       const content = getElement(field);
@@ -1028,11 +1029,12 @@ function createKeywordPanel(id, inputKeywords, onUpdate) {
         value: keyword,
         description: keyword.value,
         actions,
-        subItems: keyword.conditions.map(c => ({
-          label: String(c.indicator),
-          description: c.negate ? `Negated` : undefined,
+        // TODO: Support multiple conditions (or-groups)
+        subItems: keyword.conditional.conditions[0].indicators.map(ind => ({
+          label: String(ind.indicator),
+          description: ind.negate ? `Negated` : undefined,
           icons
-        })),
+        }))
       };
     });
   };
@@ -1294,7 +1296,7 @@ function editKeyword(onUpdate, keyword) {
     const newKeyword = {
       name: keywordName,
       value: keywordValue ? keywordValue : undefined,
-      conditions: []
+      conditional: new Conditional()
     };
 
     if (ind1 !== `None`) {

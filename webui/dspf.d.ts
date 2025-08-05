@@ -24,7 +24,7 @@ export declare class DisplayFile {
     }): {
         value: string;
         keywords: Keyword[];
-        conditions: Conditional[];
+        conditional: Conditional;
     };
     updateField(recordFormat: string, originalFieldName: string, fieldInfo: FieldInfo): {
         newLines: string[];
@@ -51,7 +51,7 @@ export declare class RecordInfo {
 export interface Keyword {
     name: string;
     value?: string;
-    conditions: Conditional[];
+    conditional: Conditional;
 }
 export type DisplayType = "input" | "output" | "both" | "const" | "hidden";
 export declare class FieldInfo {
@@ -73,13 +73,22 @@ export declare class FieldInfo {
             [lineIndex: number]: string;
         };
     };
-    conditions: Conditional[];
+    conditional: Conditional;
     keywords: Keyword[];
     constructor(startRange: number, name?: string | undefined);
     handleKeywords(): void;
 }
 export declare class Conditional {
+    conditions: Condition[];
+    //indicator: number;
+    //negate: boolean;
+    //constructor(indicator: number, negate?: boolean);
+}
+export declare class Condition {
+    indicators: Indicator[];
+}
+export declare class Indicator {
     indicator: number;
     negate: boolean;
-    constructor(indicator: number, negate?: boolean);
 }
+

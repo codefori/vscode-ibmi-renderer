@@ -406,9 +406,7 @@ export class DisplayFile {
     }
 
     for (const keyword of recordFormat.keywords) {
-      for (const keyword of recordFormat.keywords) {
-        lines.push(...keyword.conditional.getLinesWithCondition(`     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`));
-      }
+      lines.push(...keyword.conditional.getLinesWithCondition(`     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`));
     }
 
     return lines;
@@ -597,7 +595,7 @@ export class Conditional {
                     this.conditions[this.conditions.length - 1].indicators.push({
                         indicator: indicator,
                         negate: negate
-                    })
+                    });
                 }
             }
 
@@ -610,7 +608,7 @@ export class Conditional {
     }
 
     getLinesWithCondition(line: string): string[] {
-      if (this.conditions.length == 1 && this.conditions[0].indicators.length == 0) {
+      if (this.conditions.length === 1 && this.conditions[0].indicators.length === 0) {
         return [line];
       }
       let lines: string[] = [];
@@ -622,7 +620,7 @@ export class Conditional {
             lines.push(line.padEnd(16));
             i = 0;
           }
-          if (i == 0) {
+          if (i === 0) {
             line = `     A${cIdx > 0 ? "O" : " "}`;
           }
           i++;
@@ -635,7 +633,7 @@ export class Conditional {
     }
 
     isActive(indicators: DisplayFileIndicators): boolean {
-      if (this.conditions.length <= 1 && this.conditions[0].indicators.length == 0) {
+      if (this.conditions.length <= 1 && this.conditions[0].indicators.length === 0) {
         return true;
       }
       this.conditions.forEach(cond => {

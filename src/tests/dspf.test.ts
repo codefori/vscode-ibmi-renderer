@@ -28,15 +28,15 @@ describe('DisplayFile tests', () => {
     let dds = new DisplayFile();
     dds.parse(dspf1);
 
-    expect(dds.getRangeForFormat(`DONOTEXIST`)).toBeUndefined();
+    expect(dds.getHeaderRangeForFormat(`DONOTEXIST`)).toBeUndefined();
     
     let range: DdsLineRange | undefined;
 
-    range = dds.getRangeForFormat(`FMT1`);
+    range = dds.getHeaderRangeForFormat(`FMT1`);
     expect(range?.start).toBe(3);
     expect(range?.end).toBe(9);
 
-    range = dds.getRangeForFormat(`HEAD`);
+    range = dds.getHeaderRangeForFormat(`HEAD`);
     expect(range?.start).toBe(1);
     expect(range?.end).toBe(3);
   });
@@ -60,9 +60,6 @@ describe('DisplayFile tests', () => {
   });
 
   it('getLinesForField', () => {
-
-    let dds = new DisplayFile();
-
     let field = new FieldInfo(0);
     field.displayType = `const`;
     field.value = `Some text`;
@@ -92,7 +89,6 @@ describe('DisplayFile tests', () => {
     expect(lines[0]).toBe(`     A                                  4 10'Some text'`);
     expect(lines[1]).toBe(`     A                                      COLOR(BLU)`);
     expect(lines[2]).toBe(`     A                                      DSPATR(PR)`);
-
   });
 
   it('No duplicate RecordInfo', () => {

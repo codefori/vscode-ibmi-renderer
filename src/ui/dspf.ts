@@ -437,14 +437,14 @@ export class DisplayFile {
   }
 
   // TODO: test cases
-  static getLinesForFormat(recordFormat: RecordInfo): string[] {
+  static getHeaderLinesForFormat(recordFormat: string, keywords: Keyword[]): string[] {
     const lines: string[] = [];
 
-    if (recordFormat.name !== GLOBAL_RECORD_NAME) {
-      lines.push(`     A          R ${recordFormat.name}`);
+    if (recordFormat) {
+      lines.push(`     A          R ${recordFormat}`);
     }
 
-    for (const keyword of recordFormat.keywords) {
+    for (const keyword of keywords) {
       // TODO: support conditions
       lines.push(
         `     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`,
@@ -454,7 +454,7 @@ export class DisplayFile {
     return lines;
   }
 
-  public getRangeForFormat(recordFormat: string): DdsLineRange|undefined {
+  public getHeaderRangeForFormat(recordFormat: string): DdsLineRange|undefined {
     let range: DdsLineRange|undefined = undefined;
     const currentFormatI = this.formats.findIndex(format => format.name === recordFormat);
     if (currentFormatI > 0) {
@@ -474,9 +474,9 @@ export class DisplayFile {
   }
 
   // TODO: test cases
-  public updateFormat(originalFormatName: string, newRecordFormat: RecordInfo): DdsUpdate|undefined {
-    const newLines = DisplayFile.getLinesForFormat(newRecordFormat);
-    let range = this.getRangeForFormat(originalFormatName);
+  public updateFormatHeader(originalFormatName: string, keywords: Keyword[]): DdsUpdate|undefined {
+    const newLines = DisplayFile.getHeaderLinesForFormat(originalFormatName, keywords);
+    let range = this.getHeaderRangeForFormat(originalFormatName);
 
     if (range) {
       range = {

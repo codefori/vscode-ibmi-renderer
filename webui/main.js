@@ -44,6 +44,8 @@ const timeFormats = {
   '*JIS': 'hh:mm:ss',
 };
 
+const GLOBAL_RECORD_FORMAT = `_GLOBAL`;
+
 const vscode = acquireVsCodeApi();
 
 const pxwPerChar = 8.45;
@@ -92,7 +94,7 @@ function loadDDS(newDoc, type, withRerender = true) {
   activeDocumentType = type;
 
   if (withRerender) {
-    const validFormats = activeDocument.formats.filter(format => format.name !== `GLOBAL`);
+    const validFormats = activeDocument.formats.filter(format => format.name !== GLOBAL_RECORD_FORMAT);
 
     setTabs(validFormats.map(format => format.name), lastSelectedFormat);
 
@@ -777,7 +779,9 @@ function updateRecordFormatSidebar(recordInfo, globalInfo) {
 
   sections.push({
     title: `Format Keywords`,
-    html: createKeywordPanel(`keywords-${recordInfo.name}`, recordInfo.keywords),
+    html: createKeywordPanel(`keywords-${recordInfo.name}`, recordInfo.keywords, (keywords) => {
+      sendFormatHeaderUpdate(recordInfo.name, keywords);
+    }),
     open: true
   });
 
@@ -983,6 +987,18 @@ function sendFieldUpdate(recordFormat, originalFieldName, newFieldInfo) {
   if (newGroup) {
     setActiveField(newGroup, newFieldInfo);
   }
+}
+
+/**
+ * @param {string} recordFormat 
+ * @param {Keyword[]} newKeywords 
+ */
+function sendFormatHeaderUpdate(recordFormat, newKeywords) {
+  vscode.postMessage({
+    command: `updateFormat`,
+    recordFormat,
+    newKeywords
+  });
 }
 
 /**

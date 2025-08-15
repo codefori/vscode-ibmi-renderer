@@ -1,7 +1,6 @@
-import { readFile, readFileSync } from "fs";
-import { WebviewViewProvider, WebviewView, Uri, CancellationToken, WebviewViewResolveContext, Webview, DiagnosticSeverity, window, WebviewPanel, ViewColumn, ExtensionContext, workspace, TextDocument, TextEdit, Range, WorkspaceEdit, Position } from "vscode";
-import { basename } from "path";
-import { DisplayFile, FieldInfo } from "./dspf";
+import { readFileSync } from "fs";
+import { Uri, Webview, window, WebviewPanel, ViewColumn, ExtensionContext, workspace, TextDocument, Range, WorkspaceEdit, Position } from "vscode";
+import { DisplayFile, FieldInfo, Keyword, RecordInfo } from "./dspf";
 
 
 export class RendererWebview {
@@ -126,7 +125,32 @@ export class RendererWebview {
               );
 
               await workspace.applyEdit(workspaceEdit);
-              this.load(false);
+              this.load(false); //Field is updated on the client
+            }
+          }
+        }
+        break;
+
+      case `updateFormat`:
+        // This does not update any of the fields in the record format, only the format header
+        recordFormat = message.recordFormat;
+        const newKeywords: Keyword[] = message.newKeywords;
+
+        if (typeof recordFormat === `string` && Array.isArray(newKeywords)) {
+          const formatUpdate = this.dds?.updateFormatHeader(recordFormat, newKeywords);
+
+          if (formatUpdate) {
+            if (formatUpdate.range && this.document) {
+              const workspaceEdit = new WorkspaceEdit();
+              workspaceEdit.replace(
+                this.document.uri, 
+                new Range(formatUpdate.range.start, 0, formatUpdate.range.end, 1000), 
+                formatUpdate.newLines.join('\n'), // TOOD: use the correct EOL?
+                {label: `Update DDS Format`, needsConfirmation: false} 
+              );
+
+              await workspace.applyEdit(workspaceEdit);
+              this.load(true);
             }
           }
         }

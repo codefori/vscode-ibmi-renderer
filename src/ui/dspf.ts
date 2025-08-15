@@ -361,7 +361,7 @@ export class DisplayFile {
     }, [] as Conditional[][]);
   }
 
-  private static getLinesForKeyword(keyword: Keyword): string[] {
+  public static getLinesForKeyword(keyword: Keyword): string[] {
     const lines: string[] = [];
 
     // Convert array into groups of three
@@ -409,7 +409,7 @@ export class DisplayFile {
     } else if (displayType && field.name) {
       const definitionType = field.type;
       const length = String(field.length).padStart(5);
-      const decimals = String(field.decimals).padStart(2);
+      const decimals = (field.type !== `A` ? String(field.decimals) : ``).padStart(2);
       newLines.push(
         `     A ${conditionStrings}  ${field.name.padEnd(10)} ${length}${definitionType}${decimals}${displayType}${y}${x}`,
       );

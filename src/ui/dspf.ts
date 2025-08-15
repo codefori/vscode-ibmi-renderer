@@ -230,8 +230,7 @@ export class DisplayFile {
   static parseConditionals(conditionColumns: string): Conditional[] {
     if (conditionColumns.trim() === "") {return [];}
 
-    /** @type {Conditional[]} */
-    let conditionals = [];
+    let conditionals: Conditional[] = [];
 
     //TODO: something with condition
     //const condition = conditionColumns.substring(0, 1); //A (and) or O (or)
@@ -351,6 +350,37 @@ export class DisplayFile {
     return result;
   }
 
+  private static conditionalGroups(conditions: Conditional[]) {
+    return conditions.reduce((acc, curr, index) => {
+      if (index % 3 === 0) {
+        acc.push([curr]);
+      } else {
+        acc[acc.length - 1].push(curr);
+      }
+      return acc;
+    }, [] as Conditional[][]);
+  }
+
+  private static getLinesForKeyword(keyword: Keyword): string[] {
+    const lines: string[] = [];
+
+    // Convert array into groups of three
+    const condition = this.conditionalGroups(keyword.conditions);
+
+    const firstConditions = condition[0] || [];
+    const conditionStrings = firstConditions.map(c => `${c.negate ? 'N' : ' '}${c.indicator}`).join('').padEnd(9);
+
+    lines.push(`     A ${conditionStrings}                            ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`);
+
+    for (let g = 1; g < condition.length; g++) {
+      const group = condition[g];
+      const conditionStrings = group.map(c => `${c.negate ? 'N' : ' '}${c.indicator}`).join('');
+      lines.push(`     A ${conditionStrings}`);
+    }
+
+    return lines;
+  }
+
   public static getLinesForField(field: FieldInfo): string[] {
     const newLines: string[] = [];
 
@@ -366,25 +396,27 @@ export class DisplayFile {
     const y = String(field.position.y).padStart(3, ` `);
     const displayType = FIELD_TYPE[field.displayType!];
 
+    // Convert array into groups of three
+    const condition = this.conditionalGroups(field.conditions);
+    const firstConditions = condition[0] || [];
+    const conditionStrings = firstConditions.map(c => `${c.negate ? 'N' : ' '}${c.indicator}`).join('').padEnd(9);
+
     if (field.displayType === `const`) {
       const value = field.value;
       newLines.push(
-        `     A                                ${y}${x}'${value}'`,
+        `     A ${conditionStrings}                      ${y}${x}'${value}'`,
       );
     } else if (displayType && field.name) {
       const definitionType = field.type;
       const length = String(field.length).padStart(5);
       const decimals = String(field.decimals).padStart(2);
       newLines.push(
-        `     A            ${field.name.padEnd(10)} ${length}${definitionType}${decimals}${displayType}${y}${x}`,
+        `     A ${conditionStrings}  ${field.name.padEnd(10)} ${length}${definitionType}${decimals}${displayType}${y}${x}`,
       );
     }
 
     for (const keyword of field.keywords) {
-      // TODO: support conditions
-      newLines.push(
-        `     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`,
-      );
+      newLines.push(...DisplayFile.getLinesForKeyword(keyword));
     }
 
     return newLines;
@@ -446,9 +478,7 @@ export class DisplayFile {
 
     for (const keyword of keywords) {
       // TODO: support conditions
-      lines.push(
-        `     A                                      ${keyword.name}${keyword.value ? `(${keyword.value})` : ``}`,
-      );
+      lines.push(...DisplayFile.getLinesForKeyword(keyword));
     }
 
     return lines;

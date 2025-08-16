@@ -80,9 +80,6 @@ export declare class FieldInfo {
 }
 export declare class Conditional {
     conditions: Condition[];
-    //indicator: number;
-    //negate: boolean;
-    //constructor(indicator: number, negate?: boolean);
 }
 export declare class Condition {
     indicators: Indicator[];

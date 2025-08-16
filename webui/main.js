@@ -262,13 +262,17 @@ function renderSelectedFormat(layer, format) {
             windowTitle.keywords.push({
               name: `COLOR`,
               value: parts[index + 1],
-              conditional: new Conditional()
+              conditional: {
+                conditions: [{indicators: []}]
+              }
             });
           case `*DSPATR`:
             windowTitle.keywords.push({
               name: `DSPATR`,
               value: parts[index + 1],
-              conditional: new Conditional()
+              conditional: {
+                conditions: [{indicators: []}]
+              }
             });
             break;
 
@@ -290,7 +294,9 @@ function renderSelectedFormat(layer, format) {
           windowTitle.keywords.push({
             name: `COLOR`,
             value: `BLU`,
-            conditional: new Conditional()
+            conditional: {
+                conditions: [{indicators: []}]
+              }
           });
         }
 
@@ -811,7 +817,7 @@ function clearFieldInfo() {
     };
 
     return button;
-  }
+  };
 
   // Creates: <vscode-button secondary>Secondary button</vscode-button>
   
@@ -1296,25 +1302,27 @@ function editKeyword(onUpdate, keyword) {
     const newKeyword = {
       name: keywordName,
       value: keywordValue ? keywordValue : undefined,
-      conditional: new Conditional()
+      conditional: {
+                conditions: [{indicators: []}]
+              }
     };
 
     if (ind1 !== `None`) {
-      newKeyword.conditions.push({
+      newKeyword.conditional.conditions[0].indicators.push({
         indicator: ind1,
         negate: neg1
       });
     }
 
     if (ind2 !== `None`) {
-      newKeyword.conditions.push({
+      newKeyword.conditional.conditions[0].indicators.push({
         indicator: ind2,
         negate: neg2
       });
     }
 
     if (ind3 !== `None`) {
-      newKeyword.conditions.push({
+      newKeyword.conditional.conditions[0].indicators.push({
         indicator: ind3,
         negate: neg3
       });

@@ -101,6 +101,11 @@ class DisplayFile {
             this.currentField.name = name;
             this.currentField.value = "";
             this.currentField.length = Number(len);
+            this.currentField.lineIndex = index;
+            this.currentField.lineText = line;
+            if (line[28] === 'R') {
+              this.currentField.isRecordReference = true;
+            }
             switch (inout)
             {
             case "I":
@@ -168,6 +173,11 @@ class DisplayFile {
               if (this.currentField.value == null) this.currentField.value = "";
               this.currentField.length = this.currentField.value.length;
               this.currentField.displayType = `const`;
+              this.currentField.lineIndex = index;
+              this.currentField.lineText = line;
+                if (line[28] === 'R') {
+                this.currentField.isRecordReference = true;
+              }
             
               this.currentField.conditions.push(
                 ...DisplayFile.parseConditionals(conditionals)
@@ -466,6 +476,15 @@ class FieldInfo {
 
     /** @type {{name: string, value: string, conditions: Conditional[]}[]} */
     this.keywords = [];
+
+    /** @type {number} */
+    this.lineIndex = -1;
+
+    /** @type {boolean} */
+    this.isRecordReference = false;
+
+    /** @type {string} */
+    this.lineText = ``;
   }
 
   handleKeywords() {

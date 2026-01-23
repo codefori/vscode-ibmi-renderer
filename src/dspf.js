@@ -175,7 +175,7 @@ class DisplayFile {
               this.currentField.displayType = `const`;
               this.currentField.lineIndex = index;
               this.currentField.lineText = line;
-                if (line[28] === 'R') {
+              if (line[28] === 'R') {
                 this.currentField.isRecordReference = true;
               }
             

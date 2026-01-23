@@ -5,6 +5,7 @@ const depts = require("./file/depts");
 const replloadfm = require("./file/replloadfm");
 const issue1149 = require(`./file/issue1149`);
 const issue1382 = require(`./file/issue1382`);
+const recordref = require(`./file/recordref`);
 
 exports.simple = () => {
   const file = new DisplayFile();
@@ -173,4 +174,30 @@ exports.issue1382 = () => {
   const textField2 = screenFormat.fields[1];
   assert.strictEqual(textField2.name, `TEXT2`);
   assert.strictEqual(textField2.value, `This text containt dashes -Y/N-`);
+}
+
+exports.fieldMetadata = () => {
+  const file = new DisplayFile();
+  file.parse(recordref.lines);
+
+  assert.strictEqual(file.formats.length, 2);
+
+  const testFormat = file.formats[1];
+  assert.strictEqual(testFormat.name, `TESTFMT`);
+  assert.strictEqual(testFormat.fields.length, 5);
+
+  // Test field with 'R' at position 28 (isRecordReference = true)
+  const field1 = testFormat.fields[0];
+  assert.strictEqual(field1.name, `FIELD1`);
+  assert.strictEqual(field1.lineIndex, 2);
+  assert.strictEqual(field1.lineText, '     A            FIELD1    R   10A  O  5 10                                    ');
+  assert.strictEqual(field1.isRecordReference, true);
+
+  // Test normal field without 'R' at position 28 (isRecordReference = false)
+  const normalField = testFormat.fields[1];
+  assert.strictEqual(normalField.name, `NORMALFLD`);
+  assert.strictEqual(normalField.lineIndex, 3);
+  assert.strictEqual(normalField.lineText, '     A            NORMALFLD     15A  B  6 10                                    ');
+  assert.strictEqual(normalField.isRecordReference, false);
+
 }

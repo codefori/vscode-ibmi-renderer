@@ -767,15 +767,16 @@ function updateRecordFormatSidebar(recordInfo, globalInfo) {
   /** @type {Section[]} */
   let sections = [];
 
-  // TODO: support updating record formats
-
   if (globalInfo) {
+    // Section for keywords that apply to the entire file
     sections.push({
       title: `File Keywords`,
       html: createKeywordPanel(`keywords-${globalInfo.name}`, globalInfo.keywords),
       open: true
     });
   }
+
+  // Section for keywords on the record format
 
   sections.push({
     title: `Format Keywords`,

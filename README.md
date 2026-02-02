@@ -1,8 +1,9 @@
-## vscode-displayfile
+**This repository is out of sync with the VS Code extension found in the Marketplace and in OpenVSX**. As we transition to a new DDS renderer, the old renderer is deprecated and replace with this new real-time DDS editor.
 
-A display and printer file renderer for Visual Studio Code. In preview. Not perfected.
+## IBM i Renderer
 
-* Provides a Code Lens on `dds.dspf` and `dds.prtf` to let the user render all or a specific record format into a new tab.
-* Configurable option to change preview update rate. Default is 1.5 seconds.
+⚠️ Still in development. Not ready for production.
 
-![image](https://user-images.githubusercontent.com/3708366/147897988-c9f9f3cd-11ca-485b-a698-a8a55a5bafc7.png)
+Adds a new editor to VS Code for IBM i display files.
+
+[See the project board](https://github.com/orgs/codefori/projects/7) for remaining functionality.

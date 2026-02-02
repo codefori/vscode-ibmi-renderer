@@ -1,0 +1,41 @@
+<head>
+  <script src="{elements}" type="module"></script>
+  <script src="{konva}"></script>
+  <script src="{main}"></script>
+  <link rel="stylesheet" href="{styles}">
+  <link rel="stylesheet" href="{codicon}" id="vscode-codicon-stylesheet">
+</head>
+
+<!-- https://vscode-elements.github.io/guides/getting-started/ -->
+
+<body style="padding: 0em;">
+  <div>
+    <!-- The reason the tabs are seperate is because -->
+    <!-- we don't want multiple canvases -->
+    <vscode-tabs id="recordFormatTabs" selected-index="0" fixed-pane="start">
+    </vscode-tabs>
+
+
+    <div style="display: flex; height: 100vh;">
+      <!-- Left Sidebar -->
+      <div style="width: 20%; background-color: var(--vscode-sideBar-background);">
+        <div id="recordFormatSidebar">
+        </div>
+        <div id="keywordEditorArea">
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div style="flex: 1; display: flex; justify-content: center; margin-top: 3em;">
+        <div id="container"></div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div style="width: 20%; background-color: var(--vscode-sideBar-background);">
+        <div id="fieldInfoSidebar">
+        </div>
+      </div>
+    </div></div>
+
+  </div>
+</body>

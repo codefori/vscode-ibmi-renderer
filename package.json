@@ -1,79 +1,65 @@
 {
-	"name": "vscode-displayfile",
-	"displayName": "IBM i Renderer",
-	"description": "Preview IBM i display & printer files",
-	"version": "0.1.3",
-	"publisher": "halcyontechltd",
-	"author": {
-		"name": "Halcyon-Tech, Liam Allan"
-	},
-	"keywords": [
-		"ibmi",
-		"rpgle",
-		"cobol",
-		"ile",
-		"iseries",
-		"as400",
-		"printer",
-		"5250"
-	],
-	"preview": true,
-	"repository": "https://github.com/halcyon-tech/vscode-displayfile",
-	"engines": {
-		"vscode": "^1.63.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"icon": "icon.png",
-	"activationEvents": [
-		"onLanguage:dds.dspf",
-		"onLanguage:dds.prtf"
-	],
-	"main": "./src/extension.js",
-	"contributes": {
-		"snippets": [
-			{
-				"path": "./schemas/dspf.code-snippets",
-				"language": "dds.dspf"
-			}
-		],
-		"configuration": {
-			"title": "Display File",
-			"properties": {
-				"vscode-displayfile.renderTimeout": {
-					"type": "number",
-					"description": "Amount of time to wait before rendering changes after the cursor has moved. You may have to restart VS Code if you change this value.",
-					"default": 1500,
-					"minimum": 0
-				}
-			}
-		},
-		"commands": [
-			{
-				"command": "vscode-displayfile.changeInd",
-				"title": "Flip indicators",
-				"category": "Display File"
-			}
-		]
-	},
-	"extensionDependencies": [
-		"barrettotte.ibmi-languages"
-	],
-	"scripts": {
-		"lint": "eslint .",
-		"test": "node ./test",
-		"package": "vsce package"
-	},
-	"devDependencies": {
-		"@types/glob": "^7.1.4",
-		"@types/mocha": "^9.0.0",
-		"@types/node": "14.x",
-		"@types/vscode": "^1.63.0",
-		"@vscode/test-electron": "^1.6.2",
-		"eslint": "^8.6.0",
-		"glob": "^7.1.7",
-		"mocha": "^9.1.3",
-		"typescript": "^4.4.4"
-	}
+  "name": "vscode-ibmi-renderer",
+  "displayName": "vscode-ibmi-renderer",
+  "description": "IBM i Renderer 2",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.97.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:dds.dspf"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-ibmi-renderer.launchRenderer",
+        "title": "Launch Renderer",
+        "icon": "$(search)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "vscode-ibmi-renderer.launchRenderer",
+          "when": "editorLangId == dds.dspf",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run build:frontend && npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "build:frontend": "mkdir -p webui/scripts && cp node_modules/@vscode-elements/elements/dist/bundled.js webui/scripts/vscode-elements.js && cp node_modules/@vscode/codicons/dist/codicon.css webui/scripts/codicon.css && cp node_modules/@vscode/codicons/dist/codicon.ttf webui/scripts/codicon.ttf && cp node_modules/konva/konva.min.js webui/scripts/konva.min.js",
+    "build:esbuild": "node esbuild.js",
+    "build:tsc": "tsc --noEmit --project tsconfig.json",
+    "getTsTypesForFile": "tsc --declaration --emitDeclarationOnly --outDir types && cp types/ui/dspf.d.ts webui/dspf.d.ts",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.97.0",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.24.2",
+    "eslint": "^9.19.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@vscode-elements/elements": "^1.15.0",
+    "@vscode/codicons": "^0.0.36",
+    "konva": "^9.3.20",
+    "vitest": "^3.2.0"
+  }
 }

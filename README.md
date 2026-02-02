@@ -1,4 +1,4 @@
-**This repository is out of sync with the VS Code extension found in the Marketplace and in OpenVSX**. As we transition to a new DDS renderer, the old renderer is deprecated and replace with this new real-time DDS editor.
+**This repository is out of sync with the VS Code extension found in the Marketplace and in OpenVSX**. As we transition to a new DDS renderer, the old renderer is deprecated and replaced with this new real-time DDS editor.
 
 ## IBM i Renderer
 
